@@ -25,3 +25,16 @@ Lab 0
   _start:
     wfe
     b _start
+
+Lab 1
+-----
+
+.. code-block:: c
+
+  // set stack pointer and branch to main function.
+  2:
+  	ldr x0, = _stack_top
+  	mov sp, x0
+  	bl main
+  1:
+  	b 1b

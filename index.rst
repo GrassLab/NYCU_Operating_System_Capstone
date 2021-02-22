@@ -60,12 +60,15 @@ If you find any of them, send an issue to github.
   :hidden:
 
   labs/lab0
+  labs/lab1
 
 .. toctree::
   :caption: Hardware
   :hidden:
 
   hardware/asm
+  hardware/uart
+  hardware/mailbox
 
 .. toctree::
   :caption: Miscs
