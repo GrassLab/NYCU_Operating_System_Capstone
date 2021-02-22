@@ -97,10 +97,13 @@
               <p class="caption"><span class="caption-text">Labs</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="labs/lab0.html">Lab 0: Environment Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="labs/lab1.html">Lab 1: Hello World</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Hardware</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="hardware/asm.html">The Assembly You Need</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hardware/uart.html">UART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hardware/mailbox.html">Mailbox</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Miscs</span></p>
 <ul>
@@ -174,16 +177,63 @@
             
   <div class="section" id="nycu-operating-system-capstone-spring-2021">
 <h1>NYCU, Operating System Capstone, Spring 2021<a class="headerlink" href="#nycu-operating-system-capstone-spring-2021" title="Permalink to this headline">¶</a></h1>
-<p>This course aims to introduce the design and implementation of the operating system kernel.
+<p>This course aims to introduce the design and implementation of operating system kernels.
 You’ll learn both concept and implementation from a series of labs.</p>
 <p>This course uses <a class="reference external" href="https://www.raspberrypi.org/products/raspberry-pi-3-model-b-plus/">Raspberry Pi 3 Model B+</a> (rpi3 for short)
-as a hardware platform.
+as the hardware platform.
 Students can get their hands dirty on a <strong>Real Machine</strong> instead of an emulator.</p>
-<div class="toctree-wrapper compound">
+<div class="section" id="labs">
+<h2>Labs<a class="headerlink" href="#labs" title="Permalink to this headline">¶</a></h2>
+<p>There are 8 + 1 labs in this course.
+You’ll learn how to <strong>design</strong> a kernel by <strong>implementing</strong> it yourself.</p>
+<p>There are 2 types of labels in each lab.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 83%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">required</span></code></p></td>
+<td><p>You’re required to implement it by the description, they take up major of your scores.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">elective</span></code></p></td>
+<td><p>You can implement some of them to get a bonus.</p></td>
+</tr>
+</tbody>
+</table>
+<p>There is no limitation on which programming language you should use for the labs.
+However, there are a lot of things which are language dependent and even compiler dependent.
+You need to manage them yourself.</p>
+<p>You can check to last year’s <a class="reference external" href="https://grasslab.github.io/osdi">course website</a>
+and <a class="reference external" href="https://github.com/GrassLab/osdi2020">submission repository</a> to see what you might need
+to do during this semester.
+Yet, the requirements and descriptions may differ this semester.</p>
+</div>
+<div class="section" id="grading-policy">
+<h2>Grading Policy<a class="headerlink" href="#grading-policy" title="Permalink to this headline">¶</a></h2>
+<p>It’s allowed and recommended to check others code, but you still need to write it on your own
+instead of copy/paste.</p>
+<p>TAs validate plagiarism by asking the detail of your implementation.
+If you can’t elaborate your code clearly, you only get 70% of the score.</p>
+<p>Your code may work on an emulator even it’s wrong.
+Hence, you get 90% of the score if your code works on QEMU but not on real rpi3.</p>
+<p>For late hand in, the penalty is 1% per week.</p>
+</div>
+<div class="section" id="disclaimer">
+<h2>Disclaimer<a class="headerlink" href="#disclaimer" title="Permalink to this headline">¶</a></h2>
+<p>We’re not kernel developers or experienced embedded system developers.
+It’s common we made mistakes in the description.
+If you find any of them, send an issue to github.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This documentation is not self-contained, you can get more information from external references.</p>
 </div>
 <div class="toctree-wrapper compound">
 </div>
 <div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
 </div>
 </div>
 
