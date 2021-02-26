@@ -355,9 +355,15 @@ More information about pi3’s booting could be checked on official website
 </div>
 <div class="section" id="interact-with-rpi3">
 <h3>Interact with Rpi3<a class="headerlink" href="#interact-with-rpi3" title="Permalink to this headline">¶</a></h3>
-<p>Use the provided <a class="reference external" href="https://github.com/GrassLab/osdi/raw/master/supplement/kernel8.img">kernel8.img</a> and connect TX, RX, GND to the corresponding pins on rpi3.
-After power on, you can read and write data from /dev/ttyUSB0 (Linux).
-You can use putty or screen with baud rate 115200 to interact with your rpi3.</p>
+<p>In our provided bootable image, it contains a kernel image can echoes what you type through UART.
+You can use it to test if your Lab kits function well.</p>
+<p>1. If you use method 2 to set up your bootable image, you should download <a class="reference external" href="https://github.com/GrassLab/osdi/raw/master/supplement/kernel8.img">kernel8.img</a>
+, and put it into your boot partition. It’s identical to the one in the provided bootable image.</p>
+<ol class="arabic simple" start="2">
+<li><p>Plug in the UART to USB converter to your host machine, and open it through serial console such as screen or putty with correct baud rate.</p></li>
+<li><p>Connect TX, RX, GND to the corresponding pins on rpi3, and turn on your rpi3.</p></li>
+<li><p>After your rpi3 powers on, you can type some letters, and your serial console should print what you just typed.</p></li>
+</ol>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>screen /dev/ttyUSB0 115200
 </pre></div>
 </div>
