@@ -1,0 +1,433 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Lab 2 : Booting &mdash; nycuos 0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Assembly You Need" href="../hardware/asm.html" />
+    <link rel="prev" title="Lab 1: Hello World" href="lab1.html" />
+ 
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QNCCQQWJ9J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-QNCCQQWJ9J');
+</script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> nycuos
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Labs</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="lab0.html">Lab 0: Environment Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab1.html">Lab 1: Hello World</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lab 2 : Booting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#goals-of-this-lab">Goals of this lab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-a-kernel-is-loaded-on-rpi3">How a Kernel is Loaded on Rpi3</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#required">Required</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-1">Requirement 1</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#uart-bootloader">UART Bootloader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#config-kernel-loading-setting">Config Kernel Loading Setting</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-2">Requirement 2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#initial-ramdisk">Initial Ramdisk</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#new-ascii-format-cpio-archive">New ASCII Format Cpio Archive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#loading-cpio-archive">Loading Cpio Archive</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#elective">Elective</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bootloader-self-relocation">Bootloader Self Relocation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#devicetree">Devicetree</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#format">Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#parsing">Parsing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dtb-loading">Dtb Loading</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Hardware</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/asm.html">The Assembly You Need</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/uart.html">UART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/mailbox.html">Mailbox</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Miscs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../external_reference/index.html">External Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">nycuos</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Lab 2 : Booting</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/labs/lab2.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="lab-2-booting">
+<h1>Lab 2 : Booting<a class="headerlink" href="#lab-2-booting" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Booting is the process to set up the environment to run various user programs after a computer reset.
+It includes a kernel loaded by bootloader, subsystems initialization, device-driver matching, and loading the init user program to bring
+up the remaining services in userspace.</p>
+<p>In Lab 2, you’ll learn one of the methods to load your kernel and user programs.
+Also, you’ll learn how to match a device to a driver on rpi3.
+The initialization of the remaining subsystems will be introduced at later labs.</p>
+</div>
+<div class="section" id="goals-of-this-lab">
+<h2>Goals of this lab<a class="headerlink" href="#goals-of-this-lab" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Implement a bootloader that loads kernel images through UART.</p></li>
+<li><p>Understand what’s initial ramdisk.</p></li>
+<li><p>Understand what’s devicetree.</p></li>
+</ul>
+</div>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="how-a-kernel-is-loaded-on-rpi3">
+<h3>How a Kernel is Loaded on Rpi3<a class="headerlink" href="#how-a-kernel-is-loaded-on-rpi3" title="Permalink to this headline">¶</a></h3>
+<p>There are 4 steps before your kernel starts its execution.</p>
+<ol class="arabic simple">
+<li><p>GPU executes the first stage bootloader from ROM on the SoC.</p></li>
+<li><p>The first stage bootloader recognizes the FAT16/32 file system and loads the second stage bootloader bootcode.bin from SD card to L2 cache.</p></li>
+<li><p>bootcode.bin initializes SDRAM and loads start.elf</p></li>
+<li><p>start.elf reads the configuration to load a kernel and other data to memory then wakes up CPUs to start execution.</p></li>
+</ol>
+<p>The kernel loaded at step 4 can also be another bootloader with more powerful functionalities such as network booting, or ELF loading.</p>
+<p>In Lab 2, you’ll implement a bootloader that loads the actual kernel through UART, and it’s loaded by the previous stage bootloader.</p>
+</div>
+</div>
+<div class="section" id="required">
+<h2>Required<a class="headerlink" href="#required" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="requirement-1">
+<h3>Requirement 1<a class="headerlink" href="#requirement-1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="uart-bootloader">
+<h4>UART Bootloader<a class="headerlink" href="#uart-bootloader" title="Permalink to this headline">¶</a></h4>
+<p>In Lab 1, you might experience the process of moving the SD card between your host and rpi3 very often during debugging.
+You can eliminate this by introducing another bootloader to load the kernel under debugging.</p>
+<p>To send binary through UART, you should devise a protocol to read raw data.
+It rarely drops data during transmission, so you can keep the protocol simple.</p>
+<p>You can effectively write data from the host to rpi3 by serial device’s device file in Linux.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;dev/ttyUSB0&#39;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">,</span> <span class="n">buffering</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">as</span> <span class="n">tty</span><span class="p">:</span>
+  <span class="n">tty</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>You can use <code class="docutils literal notranslate"><span class="pre">qemu-system-aarch64</span> <span class="pre">-serial</span> <span class="pre">null</span> <span class="pre">-serial</span> <span class="pre">pty</span></code> to create a pseudo TTY device and test your bootloader through it.</p>
+</div>
+</div>
+<div class="section" id="config-kernel-loading-setting">
+<h4>Config Kernel Loading Setting<a class="headerlink" href="#config-kernel-loading-setting" title="Permalink to this headline">¶</a></h4>
+<p>You may still want to load your actual kernel image at 0x80000, but it then overlaps with your bootloader.
+You can first specify the start address to another by <strong>re-writing the linker script</strong>.
+Then, add <code class="docutils literal notranslate"><span class="pre">config.txt</span></code> file to your SD card’s boot partition to specify the loading address by <code class="docutils literal notranslate"><span class="pre">kernel_address=</span></code>.</p>
+<p>To further make your bootloader less ambiguous with the actual kernel, you can add the loading image name by
+<code class="docutils literal notranslate"><span class="pre">kernel=</span></code> and <code class="docutils literal notranslate"><span class="pre">arm64_bit=1</span></code></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kernel_address=0x60000
+kernel=bootloader.img
+arm64_bit=1
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1</span></code> Implement UART bootloader that loads kernel images through UART.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>UART is a low-speed interface. It’s okay to send your kernel image because it’s quite small. Don’t use it to send large binary files.</p>
+</div>
+</div>
+</div>
+<div class="section" id="requirement-2">
+<h3>Requirement 2<a class="headerlink" href="#requirement-2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="initial-ramdisk">
+<h4>Initial Ramdisk<a class="headerlink" href="#initial-ramdisk" title="Permalink to this headline">¶</a></h4>
+<p>After a kernel is initialized, it mounts a root filesystem and runs an init user program.
+The init program can be a script or executable binary to bring up other services or load other drivers later on.</p>
+<p>However, you haven’t implemented any filesystem and storage driver code yet, so you can’t load anything from the SD card using your kernel.
+Another approach is loading user programs through initial ramdisk.</p>
+<p>Initial ramdisk is a file loaded by bootloader or embedded in a kernel.
+It’s usually an archive that can be extracted to build a root filesystem.</p>
+</div>
+<div class="section" id="new-ascii-format-cpio-archive">
+<h4>New ASCII Format Cpio Archive<a class="headerlink" href="#new-ascii-format-cpio-archive" title="Permalink to this headline">¶</a></h4>
+<p>Cpio is a very simple archive format to pack directories and files.
+Each directory and file is recorded as <strong>a header followed by its pathname and content</strong>.</p>
+<p>In Lab 2, you are going to use the New ASCII Format Cpio format to create a cpio archive.
+You can first create a <code class="docutils literal notranslate"><span class="pre">rootfs</span></code> directory and put all files you need inside it.
+Then, use the following commands to archive it.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> rootfs
+find . <span class="p">|</span> cpio -o -H newc &gt; ../initramfs.cpio
+<span class="nb">cd</span> ..
+</pre></div>
+</div>
+<p><a class="reference external" href="https://www.freebsd.org/cgi/man.cgi?query=cpio&amp;sektion=5">Freebsd’s man page</a> has a detailed definition of how
+New ASCII Format Cpio Archive is structured.
+You should read it and implement a parser to read files in the archive.</p>
+</div>
+<div class="section" id="loading-cpio-archive">
+<h4>Loading Cpio Archive<a class="headerlink" href="#loading-cpio-archive" title="Permalink to this headline">¶</a></h4>
+<p><strong>QEMU</strong></p>
+<p>Add the argument <code class="docutils literal notranslate"><span class="pre">-initrd</span> <span class="pre">&lt;cpio</span> <span class="pre">archive&gt;</span></code> to QEMU.
+QEMU loads the cpio archive file to 0x8000000 by default.</p>
+<p><strong>Rpi3</strong></p>
+<p>Move the cpio archive into SD card.
+Then specify the name and loading address in <code class="docutils literal notranslate"><span class="pre">config.txt</span></code>.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>initramfs initramfs.cpio 0x20000000
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">2</span></code> Parse New ASCII Format Cpio archive, and read file’s content given file’s pathname.</p>
+</div>
+</div>
+</div>
+<div class="section" id="elective">
+<h2>Elective<a class="headerlink" href="#elective" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="bootloader-self-relocation">
+<h3>Bootloader Self Relocation<a class="headerlink" href="#bootloader-self-relocation" title="Permalink to this headline">¶</a></h3>
+<p>In the required part, you are allowed to specify the loading address of your bootloader in <code class="docutils literal notranslate"><span class="pre">config.txt</span></code>.
+However, not all previous stage bootloaders are able to specify the loading address.
+Hence, a bootloader should be able to relocate itself to another address, so it can load a kernel to an address overlapping with its loading address.</p>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">1</span></code> Add self-relocation to your UART bootloader, so you don’t need <code class="docutils literal notranslate"><span class="pre">kernel_address=</span></code> option in <code class="docutils literal notranslate"><span class="pre">config.txt</span></code></p>
+</div>
+<div class="section" id="devicetree">
+<h3>Devicetree<a class="headerlink" href="#devicetree" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h4>Introduction<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>During the booting process, a kernel should know what devices are currently connected and use the corresponding driver to initialize and access it.
+For powerful buses such as PCIe and USB, the kernel can detect what devices are connected by querying the bus’s registers.
+Then, it matches the device’s name with all drivers and uses the compatible driver to initialize and access the device.</p>
+<p>However, for a computer system with a simple bus, a kernel can’t detect what devices are connected.
+One approach to drive these devices is as you did in Lab 1;
+developers know what’s the target machine to be run on and hard code the io memory address in their kernel.
+It turns out the driver code becomes not portable.</p>
+<p>A cleaner approach is a file describing what devices are on a computer system.
+Also, it records the properties and relationships between each device.
+Then, a kernel can query this file as querying like powerful bus systems to load the correct driver.
+The file is called <strong>deivcetree</strong>.</p>
+</div>
+<div class="section" id="format">
+<h4>Format<a class="headerlink" href="#format" title="Permalink to this headline">¶</a></h4>
+<p>Devicetree has two formats <strong>devicetree source(dts)</strong> and <strong>flattened devicetree(dtb)</strong>.
+Devicetree source describes device tree in human-readable form.
+It’s then compiled into flattened devicetree so the parsing can be simpler and faster in slow embedded systems.</p>
+<p>You can read rpi3’s dts from raspberry pi’s
+<a class="reference external" href="https://github.com/raspberrypi/linux/blob/rpi-5.10.y/arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b-plus.dts">linux repository</a></p>
+<p>You can get rpi3’s dtb by either compiling it manually or download the <a class="reference external" href="https://github.com/raspberrypi/firmware/raw/master/boot/bcm2710-rpi-3-b-plus.dtb">off-the-shelf one</a>.</p>
+</div>
+<div class="section" id="parsing">
+<h4>Parsing<a class="headerlink" href="#parsing" title="Permalink to this headline">¶</a></h4>
+<p>In this elective part, you should implement a parser to parse the flattened devicetree.
+Besides, your kernel should provide an interface that takes a callback function argument.
+So a driver code can walk the entire devicetree to query each device node and match itself by checking the node’s name and properties.</p>
+<p>You can get the latest specification from the <a class="reference external" href="https://www.devicetree.org/specifications/">devicetree’s official website</a>.
+Then follow the order Chapter 5, 2, 3 and read rpi3’s dts to implement your parser.</p>
+</div>
+<div class="section" id="dtb-loading">
+<h4>Dtb Loading<a class="headerlink" href="#dtb-loading" title="Permalink to this headline">¶</a></h4>
+<p>A bootloader loads a dtb into memory and passes the loading address specified at register <code class="docutils literal notranslate"><span class="pre">x0</span></code> to the kernel.
+Besides, it modifies the original dtb content to match the actual machine setting.
+For example, it adds initial ramdisk’s loading address in dtb if you ask the bootloader to load an initial ramdisk.</p>
+<p><strong>QEMU</strong></p>
+<p>Add the argument <code class="docutils literal notranslate"><span class="pre">-dtb</span> <span class="pre">bcm2710-rpi-3-b-plus.dtb</span></code> to QEMU.</p>
+<p><strong>Rpi3</strong></p>
+<p>Move <code class="docutils literal notranslate"><span class="pre">bcm2710-rpi-3-b-plus.dtb</span></code> into SD card.</p>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">2</span></code> Implement a dtb parser with an interface that takes a callback function argument that driver code can walk the entire devicetree.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../hardware/asm.html" class="btn btn-neutral float-right" title="The Assembly You Need" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="lab1.html" class="btn btn-neutral float-left" title="Lab 1: Hello World" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Jim.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

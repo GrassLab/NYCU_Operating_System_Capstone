@@ -61,6 +61,7 @@ If you find any of them, send an issue to github.
 
   labs/lab0
   labs/lab1
+  labs/lab2
 
 .. toctree::
   :caption: Hardware
