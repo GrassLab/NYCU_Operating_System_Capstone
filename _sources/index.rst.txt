@@ -47,7 +47,7 @@ Disclaimer
 ----------
 We're not kernel developers or experienced embedded system developers.
 It's common we made mistakes in the description.
-If you find any of them, send an issue to github.
+If you find any of them, send an issue or PR to `this github repo <https://github.com/GrassLab/NYCU_Operating_System_Capstone>`_.
 
 .. note::
   This documentation is not self-contained, you can get more information from external references.
