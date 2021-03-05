@@ -273,7 +273,9 @@ You should validate your code on your rpi3, too.</p>
 <h3>From Source Code to Object Files<a class="headerlink" href="#from-source-code-to-object-files" title="Permalink to this headline">¶</a></h3>
 <p>Source code is converted to object files by cross compiler.
 After saving the following assembly as <code class="docutils literal notranslate"><span class="pre">a.S</span></code>,
-you can convert it to an object file by <code class="docutils literal notranslate"><span class="pre">aarch64-linux-gnu-gcc</span> <span class="pre">-c</span> <span class="pre">a.S</span></code></p>
+you can convert it to an object file by <code class="docutils literal notranslate"><span class="pre">aarch64-linux-gnu-gcc</span> <span class="pre">-c</span> <span class="pre">a.S</span></code>.
+Or if you would like to, you can also try llvm’s linker <code class="docutils literal notranslate"><span class="pre">clang</span> <span class="pre">-mcpu=cortex-a53</span> <span class="pre">--target=aarch64-rpi3-elf</span> <span class="pre">-c</span> <span class="pre">a.S</span></code>,
+especially if you are trying to develop on macOS.</p>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="p">.</span><span class="n">section</span> <span class="s">&quot;.text&quot;</span>
 <span class="nl">_start</span><span class="p">:</span>
   <span class="n">wfe</span>
@@ -289,7 +291,10 @@ Program loaders are usually provided by the operating system in regular developm
 In bare metal programming, ELF can be loaded by some bootloaders.</p>
 <p>To convert the object file from previous step to an ELF file,
 you can save the provided linker script as <code class="docutils literal notranslate"><span class="pre">linker.ld</span></code>, and run the following command.</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>aarch64-linux-gnu-ld -T linker.ld -o kernel8.elf a.o
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># On GNU LD
+aarch64-linux-gnu-ld -T linker.ld -o kernel8.elf a.o
+# On LLVM
+ld.lld -m aarch64elf -T linker.ld -o kernel8.elf a.o
 </pre></div>
 </div>
 </div>
@@ -299,6 +304,8 @@ you can save the provided linker script as <code class="docutils literal notrans
 Hence, you need to convert the ELF file to a raw binary image.
 You can use <code class="docutils literal notranslate"><span class="pre">objcopy</span></code> to convert ELF files to raw binary.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>aarch64-linux-gnu-objcopy -O binary kernel8.elf kernel8.img
+# Or
+llvm-objcopy --output-target=aarch64-rpi3-elf -O binary kernel8.elf kernle8.img
 </pre></div>
 </div>
 </div>
