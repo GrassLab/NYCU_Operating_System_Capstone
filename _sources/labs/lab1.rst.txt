@@ -74,6 +74,9 @@ hello    print Hello World!
 
 ``required 3`` Implement a simple shell supporting the listed commands.
 
+.. note::
+  There may be some text alignment issue on screen IO, think about \r\n on both input and output.
+
 ********
 Elective
 ********
