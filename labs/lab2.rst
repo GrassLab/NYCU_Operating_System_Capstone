@@ -152,6 +152,12 @@ Then specify the name and loading address in ``config.txt``.
 
 ``required 2`` Parse New ASCII Format Cpio archive, and read file's content given file's pathname.
 
+
+.. note::
+  In Lab 2, you only need to **put some plain text files inside your archive** to test the functionality.
+  In the later labs, you will also put script files and executables inside to automate the testing. 
+
+
 ***********
 Elective
 ***********
