@@ -79,7 +79,9 @@ From Source Code to Object Files
 
 Source code is converted to object files by cross compiler.
 After saving the following assembly as ``a.S``, 
-you can convert it to an object file by ``aarch64-linux-gnu-gcc -c a.S``
+you can convert it to an object file by ``aarch64-linux-gnu-gcc -c a.S``.
+Or if you would like to, you can also try llvm’s linker ``clang -mcpu=cortex-a53 --target=aarch64-rpi3-elf -c a.S``,
+especially if you are trying to develop on macOS.
 
 .. code-block:: c
 
@@ -102,7 +104,10 @@ you can save the provided linker script as ``linker.ld``, and run the following 
 
 .. code-block:: none
 
+  # On GNU LD
   aarch64-linux-gnu-ld -T linker.ld -o kernel8.elf a.o
+  # On LLVM
+  ld.lld -m aarch64elf -T linker.ld -o kernel8.elf a.o
 
 From ELF to Kernel Image
 ========================
@@ -114,6 +119,8 @@ You can use ``objcopy`` to convert ELF files to raw binary.
 .. code-block:: none
 
   aarch64-linux-gnu-objcopy -O binary kernel8.elf kernel8.img
+  # Or
+  llvm-objcopy --output-target=aarch64-rpi3-elf -O binary kernel8.elf kernle8.img
 
 Check on QEMU
 =============
