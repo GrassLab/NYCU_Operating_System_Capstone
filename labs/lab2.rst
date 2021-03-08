@@ -66,7 +66,7 @@ You can effectively write data from the host to rpi3 by serial device's device f
 
 .. code-block:: python
 
-  with open('dev/ttyUSB0', "wb", buffering = 0) as tty:
+  with open('/dev/ttyUSB0', "wb", buffering = 0) as tty:
     tty.write(...)
 
 
