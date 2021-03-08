@@ -255,7 +255,7 @@ You can eliminate this by introducing another bootloader to load the kernel unde
 <p>To send binary through UART, you should devise a protocol to read raw data.
 It rarely drops data during transmission, so you can keep the protocol simple.</p>
 <p>You can effectively write data from the host to rpi3 by serial device’s device file in Linux.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;dev/ttyUSB0&#39;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">,</span> <span class="n">buffering</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">as</span> <span class="n">tty</span><span class="p">:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/dev/ttyUSB0&#39;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">,</span> <span class="n">buffering</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">as</span> <span class="n">tty</span><span class="p">:</span>
   <span class="n">tty</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
