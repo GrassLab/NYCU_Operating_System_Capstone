@@ -82,13 +82,13 @@ You can first specify the start address to another by **re-writing the linker sc
 Then, add ``config.txt`` file to your SD card's boot partition to specify the loading address by ``kernel_address=``.
 
 To further make your bootloader less ambiguous with the actual kernel, you can add the loading image name by
-``kernel=`` and ``arm64_bit=1``
+``kernel=`` and ``arm_64bit=1``
 
 .. code-block:: none
 
   kernel_address=0x60000
   kernel=bootloader.img
-  arm64_bit=1
+  arm_64bit=1
 
 
 ``required 1`` Implement UART bootloader that loads kernel images through UART.
