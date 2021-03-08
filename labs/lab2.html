@@ -270,10 +270,10 @@ It rarely drops data during transmission, so you can keep the protocol simple.</
 You can first specify the start address to another by <strong>re-writing the linker script</strong>.
 Then, add <code class="docutils literal notranslate"><span class="pre">config.txt</span></code> file to your SD card’s boot partition to specify the loading address by <code class="docutils literal notranslate"><span class="pre">kernel_address=</span></code>.</p>
 <p>To further make your bootloader less ambiguous with the actual kernel, you can add the loading image name by
-<code class="docutils literal notranslate"><span class="pre">kernel=</span></code> and <code class="docutils literal notranslate"><span class="pre">arm64_bit=1</span></code></p>
+<code class="docutils literal notranslate"><span class="pre">kernel=</span></code> and <code class="docutils literal notranslate"><span class="pre">arm_64bit=1</span></code></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kernel_address=0x60000
 kernel=bootloader.img
-arm64_bit=1
+arm_64bit=1
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1</span></code> Implement UART bootloader that loads kernel images through UART.</p>
