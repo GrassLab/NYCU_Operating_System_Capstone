@@ -1,0 +1,431 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Lab 3: Allocator &mdash; nycuos 0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Assembly You Need" href="../hardware/asm.html" />
+    <link rel="prev" title="Lab 2: Booting" href="lab2.html" />
+ 
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QNCCQQWJ9J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-QNCCQQWJ9J');
+</script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> nycuos
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Labs</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="lab0.html">Lab 0: Environment Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab1.html">Lab 1: Hello World</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab2.html">Lab 2: Booting</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lab 3: Allocator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#goals-of-this-lab">Goals of this lab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reserved-memory">Reserved Memory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dynamic-memory-allocator">Dynamic Memory Allocator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#page-frame-allocator">Page Frame Allocator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#observability-of-allocators">Observability of Allocators</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#required">Required</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-1">Requirement 1</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#buddy-system">Buddy System</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#data-structure">Data Structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#free-and-coalesce-blocks">Free and Coalesce Blocks</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-2">Requirement 2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Dynamic Memory Allocator</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#elective">Elective</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#startup-allocator">Startup Allocator</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Hardware</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/asm.html">The Assembly You Need</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/uart.html">UART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/mailbox.html">Mailbox</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Miscs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../external_reference/index.html">External Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">nycuos</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Lab 3: Allocator</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/labs/lab3.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="lab-3-allocator">
+<h1>Lab 3: Allocator<a class="headerlink" href="#lab-3-allocator" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>A kernel allocates physical memory for maintaining its internal states and user programs’ use.
+Without memory allocators, you need to statically partition the physical memory into several memory pools for
+different objects.
+It’s sufficient for some systems that run known applications on known devices.
+Yet, general-purpose operating systems that run diverse applications on diverse devices determine the use and amount
+of physical memory at runtime.
+Therefore, dynamic memory allocation is necessary.</p>
+<p>In Lab 3, you need to implement memory allocators.
+They’ll be used in all later labs.</p>
+</div>
+<div class="section" id="goals-of-this-lab">
+<h2>Goals of this lab<a class="headerlink" href="#goals-of-this-lab" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Implement a page frame allocator.</p></li>
+<li><p>Implement a dynamic memory allocator.</p></li>
+<li><p>Implement a startup allocator.</p></li>
+</ul>
+</div>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="reserved-memory">
+<h3>Reserved Memory<a class="headerlink" href="#reserved-memory" title="Permalink to this headline">¶</a></h3>
+<p>After rpi3 is booted, some physical memory is already in use.
+For example, there are already spin tables for multicore boot(<code class="docutils literal notranslate"><span class="pre">0x0000</span> <span class="pre">-</span> <span class="pre">0x1000</span></code>), flatten device tree,
+initramfs, and your kernel image in the physical memory.
+Your memory allocator should not allocate these memory blocks if you still need to use them.</p>
+</div>
+<div class="section" id="dynamic-memory-allocator">
+<h3>Dynamic Memory Allocator<a class="headerlink" href="#dynamic-memory-allocator" title="Permalink to this headline">¶</a></h3>
+<p>Given the allocation size,
+a dynamic memory allocator needs to find a large enough contiguous memory block and return the pointer to it.
+Also, the memory block would be released after use.
+A dynamic memory allocator should be able to reuse the memory block for another memory allocation.
+Reserved or allocated memory should not be allocated again to prevent data corruption.</p>
+</div>
+<div class="section" id="page-frame-allocator">
+<h3>Page Frame Allocator<a class="headerlink" href="#page-frame-allocator" title="Permalink to this headline">¶</a></h3>
+<p>You may be wondering why you are asked to implement another memory allocator for page frames.
+Isn’t a well-designed dynamic memory allocator enough for all dynamic memory allocation cases?
+Indeed, you don’t need it if you run applications in kernel space only.</p>
+<p>However, if you need to run user space applications with virtual memory,
+you’ll need a lot of 4KB memory blocks with 4KB memory alignment called page frames.
+That’s because 4KB is the unit of virtual memory mapping.
+A regular dynamic memory allocator that uses a size header before memory block turns out half of the physical memory
+can’t be used as page frames.
+Therefore, a better approach is representing available physical memory as page frames.
+The page frame allocator reserves and uses an additional page frame array to bookkeep the use of page frames.
+The page frame allocator should be able to allocate contiguous page frames for allocating large buffers.
+For fine-grained memory allocation, a dynamic memory allocator can allocate a page frame first then cut it into chunks.</p>
+</div>
+<div class="section" id="observability-of-allocators">
+<h3>Observability of Allocators<a class="headerlink" href="#observability-of-allocators" title="Permalink to this headline">¶</a></h3>
+<p>It’s hard to observe the internal state of a memory allocator and hence hard to demo.
+To check the correctness of your allocator, you need to <strong>print the log of each allocation and free</strong>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>TAs will verify the correctness by these logs in the demo.</p>
+</div>
+</div>
+</div>
+<div class="section" id="required">
+<h2>Required<a class="headerlink" href="#required" title="Permalink to this headline">¶</a></h2>
+<p>In the required part, your allocator doesn’t need to deal with the reserved memory problem.
+You can find an unused memory region as the heap and only manage that part of memory.</p>
+<div class="section" id="requirement-1">
+<h3>Requirement 1<a class="headerlink" href="#requirement-1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="buddy-system">
+<h4>Buddy System<a class="headerlink" href="#buddy-system" title="Permalink to this headline">¶</a></h4>
+<p>Buddy system is a well-known and simple algorithm for allocating contiguous memory blocks.
+It has an internal fragmentation problem, but it’s still suitable for page frame allocation
+because the problem can be reduced with the dynamic memory allocator.
+We provide one possible implementation in the following part.
+You can still design it yourself as long as you follow the specification of the buddy system.</p>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1</span></code> Implement the buddy system for contiguous page frames allocation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You don’t need to handle the case of out-of-memory.</p>
+</div>
+</div>
+<div class="section" id="data-structure">
+<h4>Data Structure<a class="headerlink" href="#data-structure" title="Permalink to this headline">¶</a></h4>
+<img alt="../_images/buddy.png" src="../_images/buddy.png" />
+<p>Because a buddy system allocate blocks by the power of 2,
+you can use exponent as the entries of a page frame array to represent contiguous memory blocks.</p>
+<p>If the entry is -1, then it’s either allocated or is part of another block.</p>
+<p>Otherwise,</p>
+<p><span class="math notranslate nohighlight">\(\text{block's physical address} = \text{block's index} \times 4096 +  \text{base address}\)</span></p>
+<p>and</p>
+<p><span class="math notranslate nohighlight">\(\text{block's size} = 4096 \times 2^\text{block's exponent}\)</span></p>
+<div class="section" id="linked-lists-for-blocks-with-different-size">
+<h5>Linked-lists for blocks with different size<a class="headerlink" href="#linked-lists-for-blocks-with-different-size" title="Permalink to this headline">¶</a></h5>
+<p>You can set a maximum contiguous block size and create one linked-list for each size.
+The linked-list links free blocks of the same size.
+The buddy allocator’s search starts from the specified block size list.
+If the list is empty, it tries to find a larger block in a larger block list</p>
+</div>
+<div class="section" id="release-redundant-memory-block">
+<span id="release-redu"></span><h5>Release redundant memory block<a class="headerlink" href="#release-redundant-memory-block" title="Permalink to this headline">¶</a></h5>
+<p>The above algorithm may allocate one block far larger than the required size.
+The allocator should cut off the bottom half of the block and put it back to the buddy system until the size equals the required size.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You should print the log of releasing redundant memory block for the demo</p>
+</div>
+</div>
+</div>
+<div class="section" id="free-and-coalesce-blocks">
+<h4>Free and Coalesce Blocks<a class="headerlink" href="#free-and-coalesce-blocks" title="Permalink to this headline">¶</a></h4>
+<p>To make the buddy system contains larger contiguous memory blocks.
+When the user frees the allocated memory block, the buddy allocator should not naively put it back to the linked-list.
+It should try to <a class="reference internal" href="#find-buddy"><span class="std std-ref">Find the buddy</span></a> and <a class="reference internal" href="#merge-iter"><span class="std std-ref">Merge iteratively</span></a>.</p>
+<div class="section" id="find-the-buddy">
+<span id="find-buddy"></span><h5>Find the buddy<a class="headerlink" href="#find-the-buddy" title="Permalink to this headline">¶</a></h5>
+<p>You can use the block’s index xor with its exponent to find its buddy.
+If its buddy is in the page frame array, then you can merge them to a larger block.</p>
+</div>
+<div class="section" id="merge-iteratively">
+<span id="merge-iter"></span><h5>Merge iteratively<a class="headerlink" href="#merge-iteratively" title="Permalink to this headline">¶</a></h5>
+<p>There is still a possible buddy for the merged block.
+You should use the same way to find the buddy of the merge block.
+When you can’t find the buddy of the merged block or the merged block size is maximum-block-size,
+the allocator stops and put the merged block to the linked-list.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You should print the log of merge iteration for the demo.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="requirement-2">
+<h3>Requirement 2<a class="headerlink" href="#requirement-2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h4>Dynamic Memory Allocator<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>Your page frame allocator already provides the functionality for large contiguous memory allocation.
+Your dynamic memory allocator only needs to add a wrapper to translate a page frame to its physical address.
+For small memory allocation, you can create several memory pools for some common size such as [16, 32, 48, 96 …].
+Then, partition page frames into several chunk slots.
+When there is a memory allocation request, round up the requested allocation size to the nearest size and check if
+there is any unallocated slot.
+If not, allocate a new page frame from the page allocator.
+Then, return one chunk to the caller.
+Objects from the same page frame have a common prefix address.
+The allocator can use it to determine the memory pool the chunk belonged to when it’s freed.</p>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">2</span></code> Implement a dynamic memory allocator.</p>
+</div>
+</div>
+</div>
+<div class="section" id="elective">
+<h2>Elective<a class="headerlink" href="#elective" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="startup-allocator">
+<span id="startup-alloc"></span><h3>Startup Allocator<a class="headerlink" href="#startup-allocator" title="Permalink to this headline">¶</a></h3>
+<p>In general purpose operating systems, the amount of physical memory is determined at runtime.
+Hence, a kernel needs to dynamically allocate its page frame array for its page frame allocator.
+The page frame allocator then depends on dynamic memory allocation.
+The dynamic memory allocator depends on the page frame allocator.
+This introduces the chicken or the egg problem.
+To break the dilemma, you need a dedicated allocator during startup time.</p>
+<p>The design of the startup allocator is quite simple.
+Just implement a dynamic memory allocator not based on the page allocator.
+It records the start address and size of the allocated and reserved blocks in a statically allocated array.
+If there are not many memory holes in the physical memory, it can bookkeep with a minimum number of entries.</p>
+<p>Your startup allocator should be able to reserve memory for the buddy system, kernel, initramfs, etc.
+In the end, it hands the physical memory to the buddy system.
+The buddy system should mark the reserved segment as allocated.</p>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">1</span></code> Implement a startup allocator.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../hardware/asm.html" class="btn btn-neutral float-right" title="The Assembly You Need" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="lab2.html" class="btn btn-neutral float-left" title="Lab 2: Booting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Jim.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
