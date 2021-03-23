@@ -79,7 +79,7 @@ Required
 *********
 
 In the required part, your allocator doesn't need to deal with the reserved memory problem.
-You can find an unused memory region as the heap and only manage that part of memory.
+You can find an unused memory region (e.g. 0x1000_0000 -> 0x2000_0000) and manage that part of memory only.
 
 Requirement 1
 =============
@@ -102,22 +102,18 @@ You can still design it yourself as long as you follow the specification of the 
 Data Structure
 ----------------
 
-.. image:: img/buddy.png
+.. image:: img/buddy.svg
 
 Because a buddy system allocate blocks by the power of 2, 
-you can use exponent as the entries of a page frame array to represent contiguous memory blocks.
-
-If the entry is -1, then it's either allocated or is part of another block.
-
-Otherwise,
+you can use a page frame array to record each contiguous page frame's exponent.
+Besides, the page frame can also record if a frame is allocated or belongs another frame.
+Also, you can calculate the address and the size of the contiguous block by the following formula.
 
 :math:`\text{block's physical address} = \text{block's index} \times 4096 +  \text{base address}`
 
 and
 
 :math:`\text{block's size} = 4096 \times 2^\text{block's exponent}`
-
-
 
 Linked-lists for blocks with different size
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

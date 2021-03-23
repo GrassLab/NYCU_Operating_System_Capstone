@@ -274,7 +274,7 @@ To check the correctness of your allocator, you need to <strong>print the log of
 <div class="section" id="required">
 <h2>Required<a class="headerlink" href="#required" title="Permalink to this headline">¶</a></h2>
 <p>In the required part, your allocator doesn’t need to deal with the reserved memory problem.
-You can find an unused memory region as the heap and only manage that part of memory.</p>
+You can find an unused memory region (e.g. 0x1000_0000 -&gt; 0x2000_0000) and manage that part of memory only.</p>
 <div class="section" id="requirement-1">
 <h3>Requirement 1<a class="headerlink" href="#requirement-1" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="buddy-system">
@@ -292,11 +292,10 @@ You can still design it yourself as long as you follow the specification of the 
 </div>
 <div class="section" id="data-structure">
 <h4>Data Structure<a class="headerlink" href="#data-structure" title="Permalink to this headline">¶</a></h4>
-<img alt="../_images/buddy.png" src="../_images/buddy.png" />
-<p>Because a buddy system allocate blocks by the power of 2,
-you can use exponent as the entries of a page frame array to represent contiguous memory blocks.</p>
-<p>If the entry is -1, then it’s either allocated or is part of another block.</p>
-<p>Otherwise,</p>
+<img alt="../_images/buddy.svg" src="../_images/buddy.svg" /><p>Because a buddy system allocate blocks by the power of 2,
+you can use a page frame array to record each contiguous page frame’s exponent.
+Besides, the page frame can also record if a frame is allocated or belongs another frame.
+Also, you can calculate the address and the size of the contiguous block by the following formula.</p>
 <p><span class="math notranslate nohighlight">\(\text{block's physical address} = \text{block's index} \times 4096 +  \text{base address}\)</span></p>
 <p>and</p>
 <p><span class="math notranslate nohighlight">\(\text{block's size} = 4096 \times 2^\text{block's exponent}\)</span></p>
