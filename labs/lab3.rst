@@ -102,6 +102,26 @@ You can still design it yourself as long as you follow the specification of the 
 Data Structure
 ----------------
 
+**The Frame Array** (or *"The Array"*, so to speak)
+
+*The Array* represents the allocation status of the memory by constructing a 1-1 relationship between each physical frame and *The Array*'s entries.
+For example, if the size of the total allocable memory is 200kb with each frame being 4kb each. Then *The Array* would consist of 50 entries, with the first and the second entry representing memory addresses starts from 0x0 and 0x1000(4k).
+
+However, to make *The Array* represent a living Buddy System, we need to give each entry extra meaning by assigning values, which is defined as followed:
+
+For each entry in *The Array* with index :math:`idx` and value :math:`val`
+  (Suppose the framesize to be ``4kb``)
+
+  if :math:`val \geq 0`:
+    We have an allocable, continuous memory that starts from :math:`idx \times` ``4kb`` with size being :math:`2^{val}` :math:`\times` ``4kb``.
+
+  if :math:`val =` ``<f>``: (user defined value)
+    The i'th frame is allocable space not being at the beginning frame of an allocable continuous memory.
+
+  if :math:`val =` ``<x>``: (user defined value)
+    The i'th frame is already allocated, hence not allocable.
+
+
 .. image:: img/buddy.svg
 
 Because a buddy system allocate blocks by the power of 2, 
