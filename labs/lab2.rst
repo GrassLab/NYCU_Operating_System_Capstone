@@ -230,4 +230,5 @@ Add the argument ``-dtb bcm2710-rpi-3-b-plus.dtb`` to QEMU.
 
 Move ``bcm2710-rpi-3-b-plus.dtb`` into SD card.
 
-``elective 2`` Implement a dtb parser with an interface that takes a callback function argument that driver code can walk the entire devicetree.
+``elective 2`` Implement a parser that can iterate the device tree. Also, provide an API that takes a callback function,
+so driver code can access the content of device node during device tree iteration.
