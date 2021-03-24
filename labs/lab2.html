@@ -382,7 +382,8 @@ For example, it adds initial ramdisk’s loading address in dtb if you ask the b
 <p>Add the argument <code class="docutils literal notranslate"><span class="pre">-dtb</span> <span class="pre">bcm2710-rpi-3-b-plus.dtb</span></code> to QEMU.</p>
 <p><strong>Rpi3</strong></p>
 <p>Move <code class="docutils literal notranslate"><span class="pre">bcm2710-rpi-3-b-plus.dtb</span></code> into SD card.</p>
-<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">2</span></code> Implement a dtb parser with an interface that takes a callback function argument that driver code can walk the entire devicetree.</p>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">2</span></code> Implement a parser that can iterate the device tree. Also, provide an API that takes a callback function,
+so driver code can access the content of device node during device tree iteration.</p>
 </div>
 </div>
 </div>
