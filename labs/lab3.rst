@@ -222,3 +222,6 @@ In the end, it hands the physical memory to the buddy system.
 The buddy system should mark the reserved segment as allocated.
 
 ``elective 1`` Implement a startup allocator.
+
+.. note::
+  Your startup allocator should still work when the memory size is large or contains memory holes.
