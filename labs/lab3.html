@@ -292,13 +292,28 @@ You can still design it yourself as long as you follow the specification of the 
 </div>
 <div class="section" id="data-structure">
 <h4>Data Structure<a class="headerlink" href="#data-structure" title="Permalink to this headline">¶</a></h4>
-<img alt="../_images/buddy.svg" src="../_images/buddy.svg" /><p>Because a buddy system allocate blocks by the power of 2,
-you can use a page frame array to record each contiguous page frame’s exponent.
-Besides, the page frame can also record if a frame is allocated or belongs another frame.
-Also, you can calculate the address and the size of the contiguous block by the following formula.</p>
-<p><span class="math notranslate nohighlight">\(\text{block's physical address} = \text{block's index} \times 4096 +  \text{base address}\)</span></p>
-<p>and</p>
-<p><span class="math notranslate nohighlight">\(\text{block's size} = 4096 \times 2^\text{block's exponent}\)</span></p>
+<p><strong>The Frame Array</strong> (or <em>“The Array”</em>, so to speak)</p>
+<p><em>The Array</em> represents the allocation status of the memory by constructing a 1-1 relationship between the physical memory frame and <em>The Array</em>’s entries.
+For example, if the size of the total allocable memory is 200kb with each frame being 4kb. Then <em>The Array</em> would consist of 50 entries, with the first and the second entry representing memory addresses starts from 0x0 and 0x1000(4k).</p>
+<p>However, to describe a living Buddy system with <em>The Array</em>, we need to provide extra meaning to items in <em>The Array</em> by assigning values to them, defined as followed:</p>
+<dl>
+<dt>For each entry in <em>The Array</em> with index <span class="math notranslate nohighlight">\(\text{idx}\)</span> and value <span class="math notranslate nohighlight">\(\text{val}\)</span></dt><dd><p>(Suppose the framesize to be <code class="docutils literal notranslate"><span class="pre">4kb</span></code>)</p>
+<dl class="simple">
+<dt>if <span class="math notranslate nohighlight">\(\text{val} \geq 0\)</span>:</dt><dd><p>There is an allocable, contiguous memory that starts from the <span class="math notranslate nohighlight">\(\text{idx}\)</span>’th frame with <span class="math notranslate nohighlight">\(\text{size} = 2^{\text{val}}\)</span> <span class="math notranslate nohighlight">\(\times\)</span> <code class="docutils literal notranslate"><span class="pre">4kb</span></code>.</p>
+</dd>
+<dt>if <span class="math notranslate nohighlight">\(\text{val} = \text{&lt;F&gt;}\)</span>: (user defined value)</dt><dd><p>The <span class="math notranslate nohighlight">\(\text{idx}\)</span>’th frame is free, but it belongs to a larger contiguous memory block. Hence, buddy system doesn’t directly allocate it.</p>
+</dd>
+<dt>if <span class="math notranslate nohighlight">\(\text{val} = \text{&lt;X&gt;}\)</span>: (user defined value)</dt><dd><p>The <span class="math notranslate nohighlight">\(\text{idx}\)</span>’th frame is already allocated, hence not allocable.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<img alt="../_images/buddy_frame_array.svg" src="../_images/buddy_frame_array.svg" /><p>Below is the generalized view of <strong>The Frame Array</strong>:</p>
+<img alt="../_images/buddy.svg" src="../_images/buddy.svg" /><p>You can calculate the address and the size of the contiguous block by the following formula.</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(\text{block's physical address} = \text{block's index} \times 4096 +  \text{base address}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\text{block's size} = 4096 \times 2^\text{block's exponent}\)</span></p></li>
+</ul>
 <div class="section" id="linked-lists-for-blocks-with-different-size">
 <h5>Linked-lists for blocks with different size<a class="headerlink" href="#linked-lists-for-blocks-with-different-size" title="Permalink to this headline">¶</a></h5>
 <p>You can set a maximum contiguous block size and create one linked-list for each size.
