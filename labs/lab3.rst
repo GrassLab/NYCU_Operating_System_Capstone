@@ -116,7 +116,7 @@ For each entry in *The Array* with index :math:`\text{idx}` and value :math:`\te
     There is an allocable, contiguous memory that starts from the :math:`\text{idx}`'th frame with :math:`\text{size} = 2^{\text{val}}` :math:`\times` ``4kb``.
 
   if :math:`\text{val} = \text{<F>}`: (user defined value)
-    The :math:`\text{idx}`'th frame is allocable, however not being at the beginning frame of an allocable contiguous memory.
+    The :math:`\text{idx}`'th frame is free, but it belongs to a larger contiguous memory block. Hence, buddy system doesn't directly allocate it.
 
   if :math:`\text{val} = \text{<X>}`: (user defined value)
     The :math:`\text{idx}`'th frame is already allocated, hence not allocable.
