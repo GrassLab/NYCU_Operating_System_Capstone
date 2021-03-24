@@ -104,36 +104,34 @@ Data Structure
 
 **The Frame Array** (or *"The Array"*, so to speak)
 
-*The Array* represents the allocation status of the memory by constructing a 1-1 relationship between each physical frame and *The Array*'s entries.
-For example, if the size of the total allocable memory is 200kb with each frame being 4kb each. Then *The Array* would consist of 50 entries, with the first and the second entry representing memory addresses starts from 0x0 and 0x1000(4k).
+*The Array* represents the allocation status of the memory by constructing a 1-1 relationship between the physical memory frame and *The Array*'s entries.
+For example, if the size of the total allocable memory is 200kb with each frame being 4kb. Then *The Array* would consist of 50 entries, with the first and the second entry representing memory addresses starts from 0x0 and 0x1000(4k).
 
-However, to make *The Array* represent a living Buddy System, we need to give each entry extra meaning by assigning values, which is defined as followed:
+However, to describe a living Buddy system with *The Array*, we need to provide extra meaning to items in *The Array* by assigning values to them, defined as followed:
 
-For each entry in *The Array* with index :math:`idx` and value :math:`val`
+For each entry in *The Array* with index :math:`\text{idx}` and value :math:`\text{val}`
   (Suppose the framesize to be ``4kb``)
 
-  if :math:`val \geq 0`:
-    We have an allocable, continuous memory that starts from :math:`idx \times` ``4kb`` with size being :math:`2^{val}` :math:`\times` ``4kb``.
+  if :math:`\text{val} \geq 0`:
+    There is an allocable, contiguous memory that starts from the :math:`\text{idx}`'th frame with :math:`\text{size} = 2^{\text{val}}` :math:`\times` ``4kb``.
 
-  if :math:`val =` ``<f>``: (user defined value)
-    The i'th frame is allocable space not being at the beginning frame of an allocable continuous memory.
+  if :math:`\text{val} = \text{<F>}`: (user defined value)
+    The :math:`\text{idx}`'th frame is allocable, however not being at the beginning frame of an allocable contiguous memory.
 
-  if :math:`val =` ``<x>``: (user defined value)
-    The i'th frame is already allocated, hence not allocable.
+  if :math:`\text{val} = \text{<X>}`: (user defined value)
+    The :math:`\text{idx}`'th frame is already allocated, hence not allocable.
 
+.. image:: img/buddy_frame_array.svg
+
+Below is the generalized view of **The Frame Array**:
 
 .. image:: img/buddy.svg
 
-Because a buddy system allocate blocks by the power of 2, 
-you can use a page frame array to record each contiguous page frame's exponent.
-Besides, the page frame can also record if a frame is allocated or belongs another frame.
-Also, you can calculate the address and the size of the contiguous block by the following formula.
 
-:math:`\text{block's physical address} = \text{block's index} \times 4096 +  \text{base address}`
+You can calculate the address and the size of the contiguous block by the following formula.
 
-and
-
-:math:`\text{block's size} = 4096 \times 2^\text{block's exponent}`
++ :math:`\text{block's physical address} = \text{block's index} \times 4096 +  \text{base address}`
++ :math:`\text{block's size} = 4096 \times 2^\text{block's exponent}`
 
 Linked-lists for blocks with different size
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
