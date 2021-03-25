@@ -224,4 +224,7 @@ The buddy system should mark the reserved segment as allocated.
 ``elective 1`` Implement a startup allocator.
 
 .. note::
-  Your startup allocator should still work when the memory size is large or contains memory holes.
+  * Your startup allocator should still work when the memory size is large or contains memory holes.
+
+  * Reserved memory block detection is not part of the startup allocator. You can either find a way to get those information or hard code it. Then call
+    the startup allocator's API to reserve those regions. 
