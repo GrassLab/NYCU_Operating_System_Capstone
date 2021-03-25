@@ -392,7 +392,11 @@ The buddy system should mark the reserved segment as allocated.</p>
 <p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">1</span></code> Implement a startup allocator.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Your startup allocator should still work when the memory size is large or contains memory holes.</p>
+<ul class="simple">
+<li><p>Your startup allocator should still work when the memory size is large or contains memory holes.</p></li>
+<li><p>Reserved memory block detection is not part of the startup allocator. You can either find a way to get those information or hard code it. Then call
+the startup allocator’s API to reserve those regions.</p></li>
+</ul>
 </div>
 </div>
 </div>
