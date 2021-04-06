@@ -653,6 +653,11 @@ The API and its use case should look like the below pseudo code.</p>
 <p>To test the API, you need to implement the shell command <code class="docutils literal notranslate"><span class="pre">setTimeout</span> <span class="pre">MESSAGE</span> <span class="pre">SECONDS</span></code>.
 It prints MESSAGE after SECONDS with the current time and the command executed time.</p>
 <p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">2</span></code> Implement the <code class="docutils literal notranslate"><span class="pre">setTimeout</span></code> command with the timer API.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">setTimeout</span></code> is non-blocking. Users can set multiple timeouts.
+The printing order is determined by the command executed time and the user specified SECONDS.</p>
+</div>
 </div>
 <div class="section" id="concurrent-i-o-devices-handling">
 <h3>Concurrent I/O Devices Handling<a class="headerlink" href="#concurrent-i-o-devices-handling" title="Permalink to this headline">¶</a></h3>
