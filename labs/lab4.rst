@@ -485,6 +485,9 @@ It prints MESSAGE after SECONDS with the current time and the command executed t
 
 ``elective 2`` Implement the ``setTimeout`` command with the timer API.
 
+.. note::
+    ``setTimeout`` is non-blocking. Users can set multiple timeouts. 
+    The printing order is determined by the command executed time and the user specified SECONDS.
 
 Concurrent I/O Devices Handling
 ===============================
