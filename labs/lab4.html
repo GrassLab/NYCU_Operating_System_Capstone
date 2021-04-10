@@ -400,10 +400,10 @@ You need to add a command to your shell that can</p>
 <p>The user program can go back to EL1 by taking an exception.
 But you need to set up the exception vector table first.
 You can use the following vector table and set <code class="docutils literal notranslate"><span class="pre">vbar_el1</span></code> to its address.</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="p">.</span><span class="n">align</span> <span class="mi">11</span> <span class="c1">// vector table should be aligned to 0x800</span>
-<span class="p">.</span><span class="n">global</span> <span class="n">exception_vector_table</span>
-<span class="nl">exception_handler</span><span class="p">:</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="nl">exception_handler</span><span class="p">:</span>
   <span class="p">...</span>
+<span class="p">.</span><span class="n">align</span> <span class="mi">11</span> <span class="c1">// vector table should be aligned to 0x800</span>
+<span class="p">.</span><span class="n">global</span> <span class="n">exception_vector_table</span>
 <span class="nl">exception_vector_table</span><span class="p">:</span>
   <span class="n">b</span> <span class="n">exception_handler</span> <span class="c1">// branch to a handler function.</span>
   <span class="p">.</span><span class="n">align</span> <span class="mi">7</span> <span class="c1">// entry size is 0x80, .align will pad 0</span>
@@ -445,6 +445,10 @@ You can use the following vector table and set <code class="docutils literal not
   <span class="n">adr</span> <span class="n">x0</span><span class="p">,</span> <span class="n">exception_vector_table</span>
   <span class="n">msr</span> <span class="n">vbar_el1</span><span class="p">,</span> <span class="n">x0</span>
 </pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The vector table’s base address should be aligned to 0x800</p>
 </div>
 </div>
 </div>

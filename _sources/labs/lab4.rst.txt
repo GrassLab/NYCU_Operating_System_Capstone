@@ -206,10 +206,10 @@ You can use the following vector table and set ``vbar_el1`` to its address.
 
 .. code:: c
 
-  .align 11 // vector table should be aligned to 0x800
-  .global exception_vector_table
   exception_handler:
     ...
+  .align 11 // vector table should be aligned to 0x800
+  .global exception_vector_table
   exception_vector_table:
     b exception_handler // branch to a handler function.
     .align 7 // entry size is 0x80, .align will pad 0
@@ -251,6 +251,9 @@ You can use the following vector table and set ``vbar_el1`` to its address.
     adr x0, exception_vector_table
     msr vbar_el1, x0
 
+.. note::
+
+    The vector table's base address should be aligned to 0x800
 
 Exception Handling
 -------------------
