@@ -1,0 +1,676 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Lab 5: Thread and User Process &mdash; nycuos 0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Assembly You Need" href="../hardware/asm.html" />
+    <link rel="prev" title="Lab 4: Exception and Interrupt" href="lab4.html" />
+ 
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QNCCQQWJ9J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-QNCCQQWJ9J');
+</script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> nycuos
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Labs</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="lab0.html">Lab 0: Environment Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab1.html">Lab 1: Hello World</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab2.html">Lab 2: Booting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab3.html">Lab 3: Allocator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab4.html">Lab 4: Exception and Interrupt</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lab 5: Thread and User Process</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#goals-of-this-lab">Goals of this lab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#threads">Threads</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-process">User Process</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mmu-less">MMU-less</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#run-queue-and-wait-queue">Run Queue and Wait Queue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#yield-and-preemption">Yield and Preemption</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#required">Required</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-1">Requirement 1</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creating-a-thread">Creating a Thread</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scheduler-and-context-switch">Scheduler and Context Switch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-idle-thread">The Idle Thread</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#end-of-a-thread">End of a Thread</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#test">Test</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-2">Requirement 2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#arguments-passing">Arguments Passing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#system-calls">System Calls</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#user-preemption">User Preemption</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Test</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#elective">Elective</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#wait-queue">Wait Queue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kernel-preemption">Kernel Preemption</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#posix-signal">POSIX Signal</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#implementation">Implementation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Hardware</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/asm.html">The Assembly You Need</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/uart.html">UART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/mailbox.html">Mailbox</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Miscs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../external_reference/index.html">External Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">nycuos</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Lab 5: Thread and User Process</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/labs/lab5.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="lab-5-thread-and-user-process">
+<h1>Lab 5: Thread and User Process<a class="headerlink" href="#lab-5-thread-and-user-process" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Multitasking is the most important feature of an operating system.
+In this lab, you’ll learn how to create threads and how to switch between different threads to achieve multitasking.
+Moreover, you’ll learn how a user program becomes a user process and accesses services provided by the kernel through system calls.</p>
+</div>
+<div class="section" id="goals-of-this-lab">
+<h2>Goals of this lab<a class="headerlink" href="#goals-of-this-lab" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Understand how to create threads and user processes.</p></li>
+<li><p>Understand how to implement scheduler and context switch.</p></li>
+<li><p>Understand what’s preemption.</p></li>
+<li><p>Understand how to implement the waiting mechanism.</p></li>
+<li><p>Understand how to implement POSIX signals.</p></li>
+</ul>
+</div>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="threads">
+<h3>Threads<a class="headerlink" href="#threads" title="Permalink to this headline">¶</a></h3>
+<p>In the previous lab, you already learned how to implement multitasking with a single stack.
+However, in the case of single stack multitasking, the CPU thread can’t switch between two tasks at any time.
+Otherwise, a task may corrupt another task’s context stored on the stack.</p>
+<p>As you know that the context of a CPU thread is determined by the values of its register set.
+Therefore, we can create different copies of register sets stored in the memory to represent different threads.
+When we want a CPU thread to run a specific thread, we let the CPU thread loads the corresponding register set in the memory to its registers.
+Then, from a macro point of view, there are multiple CPU threads running tasks independently at the same time.
+Moreover, these register sets can be loaded by any other CPU thread to achieve true parallelism.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In this documentation, a thread means a software thread.
+For processing elements containing their hardware register sets are called CPU threads.</p>
+</div>
+</div>
+<div class="section" id="user-process">
+<h3>User Process<a class="headerlink" href="#user-process" title="Permalink to this headline">¶</a></h3>
+<p>When a user wants to run an application,
+the operating system loads the user program into memory and runs it with one or multiple threads.
+However, users want to run multiple programs or multiple copies of the same program.
+Moreover, they want each executing program to be isolated and has its identity, capabilities, and resource.
+To achieve this, the operating system maintains multiple isolated execution instances called processes.
+A process can only access the resource it owns.
+If it needs additional resources, it invokes the corresponding system calls.
+The kernel then checks the capabilities of the process and only provides the resource if the process has the access right.</p>
+<div class="section" id="mmu-less">
+<h4>MMU-less<a class="headerlink" href="#mmu-less" title="Permalink to this headline">¶</a></h4>
+<p>In general, programs that directly run machine code on the CPU are isolated by virtual memory.
+However, we don’t enable the MMU in this lab,
+so we can’t prevent illegal memory access and we can’t use the same virtual address for different processes.
+If you want to execute multiple programs, please use different linker scripts for different programs
+and load them to different addresses to prevent overlapping.</p>
+</div>
+</div>
+<div class="section" id="run-queue-and-wait-queue">
+<h3>Run Queue and Wait Queue<a class="headerlink" href="#run-queue-and-wait-queue" title="Permalink to this headline">¶</a></h3>
+<p>One CPU thread can run a thread at a time, but there may be multiple runnable threads at the same time.
+Those runnable threads are put in the run queue.
+When the current thread relinquishes control of the CPU thread, it calls the scheduler to pick the next thread.
+Then, a piece of code saves the CPU thread’s register set and loads the next thread’s register set.</p>
+<p>During a thread’s execution, it may need to wait for a certain resource(e.g. a locked mutex or a non-ready IO device).
+Instead of busy waiting, a more efficient way is to yield the CPU thread so other threads can do meaningful jobs.
+Yet, yielding CPU is not enough because the thread may be scheduled again and waste CPU time.
+Therefore, when a thread needs to wait for a long time, it removes itself from the run queue, puts itself in a wait queue,
+and waits for others to wake it up.</p>
+<p>In general, each resource has its own wait queue.
+When the resource is ready, one or many waiting threads in the wait queue will be put back to the run queue.
+The awakened thread is eventually scheduled and runs.
+Then, it can get the resource if the resource is still available.</p>
+</div>
+<div class="section" id="yield-and-preemption">
+<h3>Yield and Preemption<a class="headerlink" href="#yield-and-preemption" title="Permalink to this headline">¶</a></h3>
+<p>As mentioned above, a thread can voluntarily yield the CPU thread to others.
+Yet, we can’t rely on a voluntary yield, because once a thread never yields,
+a high-priority thread can’t run even when it’s runnable.
+Hence, the kernel should be able to force the current thread to yield the CPU thread(i.e. preemption).</p>
+<p>The implementation of preemption is simple.
+Once a thread relinquishes control of the CPU thread during its execution,
+there is a chance for another piece of code to call the scheduler and switch to another thread.
+For example, when a thread in kernel mode is interrupted, the control is handed over to the interrupt handler.
+Before returning to the original execution, the kernel can call the scheduler to do a context switch to achieve kernel preemption.
+When a user process takes exceptions(system calls, interrupts, etc.), the control is handed over to the exception handler.
+Before returning to the original execution, the kernel can call the scheduler to do a context switch to achieve user preemption.</p>
+<p>The tricky part of preemption is the protection of critical sections because code executions are arbitrally interleaving now.
+Fortunately, user programs protect their critical sections themselves.
+Even the user program doesn’t protect the critical sections well, it’s the user program’s developer’s fault, and no one will blame the operating system.
+Also, it’s not possible to break other isolated processes.
+Therefore, the kernel developers don’t need to worry about problems caused by enabling user preemption.</p>
+<p>On the contrary, there are multiple shared resources in the kernel.
+Meanwhile, a data race in the kernel can break the entire system.
+If the kernel’s developers need to enable fine-grained preemption in kernel mode,
+They need to be aware of all possible shared resource accesses and adopt the right methods to protect them,
+hence it’s more complex to enable kernel preemption.</p>
+</div>
+</div>
+<div class="section" id="required">
+<h2>Required<a class="headerlink" href="#required" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="requirement-1">
+<h3>Requirement 1<a class="headerlink" href="#requirement-1" title="Permalink to this headline">¶</a></h3>
+<p>In this part, you need to implement the creation, switch, and recycle of threads.</p>
+<div class="section" id="creating-a-thread">
+<h4>Creating a Thread<a class="headerlink" href="#creating-a-thread" title="Permalink to this headline">¶</a></h4>
+<p>Implement a thread-creating API.
+Users can pass a function(task) to the API, and the function is run in a newly created thread.
+To make the thread schedulable and runnable, you should create a data structure and a stack for it.
+Then, put it into the run queue.</p>
+<p>The example API is listed below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">foo</span><span class="p">():</span>
+    <span class="k">pass</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="scheduler-and-context-switch">
+<h4>Scheduler and Context Switch<a class="headerlink" href="#scheduler-and-context-switch" title="Permalink to this headline">¶</a></h4>
+<p>Implement the <code class="docutils literal notranslate"><span class="pre">schedule()</span></code> API.
+When the current thread calls this API, the scheduler picks the next thread from the run queue.
+In this lab, your scheduler should at least be able to schedule the threads of the same priority in a <strong>round-robin</strong> manner.</p>
+<p>After the next thread is picked, the kernel can save the current thread’s register set and load the next thread’s.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="p">.</span><span class="n">global</span> <span class="n">switch_to</span>
+<span class="nl">switch_to</span><span class="p">:</span>
+    <span class="n">stp</span> <span class="n">x19</span><span class="p">,</span> <span class="n">x20</span><span class="p">,</span> <span class="p">[</span><span class="n">x0</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">stp</span> <span class="n">x21</span><span class="p">,</span> <span class="n">x22</span><span class="p">,</span> <span class="p">[</span><span class="n">x0</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">stp</span> <span class="n">x23</span><span class="p">,</span> <span class="n">x24</span><span class="p">,</span> <span class="p">[</span><span class="n">x0</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">stp</span> <span class="n">x25</span><span class="p">,</span> <span class="n">x26</span><span class="p">,</span> <span class="p">[</span><span class="n">x0</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">stp</span> <span class="n">x27</span><span class="p">,</span> <span class="n">x28</span><span class="p">,</span> <span class="p">[</span><span class="n">x0</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">4</span><span class="p">]</span>
+    <span class="n">stp</span> <span class="n">fp</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="p">[</span><span class="n">x0</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="n">mov</span> <span class="n">x9</span><span class="p">,</span> <span class="n">sp</span>
+    <span class="n">str</span> <span class="n">x9</span><span class="p">,</span> <span class="p">[</span><span class="n">x0</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">6</span><span class="p">]</span>
+
+    <span class="n">ldp</span> <span class="n">x19</span><span class="p">,</span> <span class="n">x20</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">ldp</span> <span class="n">x21</span><span class="p">,</span> <span class="n">x22</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">ldp</span> <span class="n">x23</span><span class="p">,</span> <span class="n">x24</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">ldp</span> <span class="n">x25</span><span class="p">,</span> <span class="n">x26</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">ldp</span> <span class="n">x27</span><span class="p">,</span> <span class="n">x28</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">4</span><span class="p">]</span>
+    <span class="n">ldp</span> <span class="n">fp</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="n">ldr</span> <span class="n">x9</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">6</span><span class="p">]</span>
+    <span class="n">mov</span> <span class="n">sp</span><span class="p">,</span>  <span class="n">x9</span>
+    <span class="n">msr</span> <span class="n">tpidr_el1</span><span class="p">,</span> <span class="n">x1</span>
+    <span class="n">ret</span>
+
+<span class="p">.</span><span class="n">global</span> <span class="n">get_current</span>
+<span class="nl">get_current</span><span class="p">:</span>
+    <span class="n">mrs</span> <span class="n">x0</span><span class="p">,</span> <span class="n">tpidr_el1</span>
+</pre></div>
+</div>
+<p>The above example gets the current thread’s data structure from the system register <code class="docutils literal notranslate"><span class="pre">tpidr_el1</span></code>.
+Then it passes the current thread and the next thread to the <code class="docutils literal notranslate"><span class="pre">switch_to(prev,</span> <span class="pre">next)</span></code> function.
+Next, the CPU thread’s register set is saved on the current thread’s data structure,
+and the next thread’s register set is loaded.
+After switching the stack pointer and the <code class="docutils literal notranslate"><span class="pre">tpidr_el1</span></code> register, the CPU thread is in the context of the next thread.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You only need to save <a class="reference external" href="https://developer.arm.com/documentation/102374/0101/Procedure-Call-Standard">callee-saved registers</a>,
+because other registers are already on the stack.</p>
+</div>
+</div>
+<div class="section" id="the-idle-thread">
+<h4>The Idle Thread<a class="headerlink" href="#the-idle-thread" title="Permalink to this headline">¶</a></h4>
+<p>The idle thread is a thread that is always runnable.
+When there are no other runnable threads,
+the scheduler should pick it to guarantee that the CPU thread always can fetch and execute the next instruction.</p>
+</div>
+<div class="section" id="end-of-a-thread">
+<h4>End of a Thread<a class="headerlink" href="#end-of-a-thread" title="Permalink to this headline">¶</a></h4>
+<p>When a thread finishes its jobs, it needs to explicitly or implicitly call(return and let the caller call) <code class="docutils literal notranslate"><span class="pre">exit()</span></code>
+to indicate it’s terminated.</p>
+<p>In general, the thread can’t recycle all its resources.
+It’s because memory deallocation is a function call, and a thread shouldn’t free its stack while still using it.
+Therefore, the finished thread only removes itself from the run queue,
+releases freeable resources, sets its state to be dead,
+and waits for someone to recycle the remaining stuff.</p>
+<p>In UNIX-like operating systems, the recycler is another thread that creates the zombie thread(parent).
+The parent can also get the status code from the zombie child’s data structure as useful information.
+In this lab, you can let the idle thread do the jobs to simplify the implementation.
+When the idle thread is scheduled, it checks if there is any zombie thread.
+If yes, it recycles them as following.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">idle</span><span class="p">():</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">kill_zombies</span><span class="p">()</span> <span class="c1"># reclaim threads marked as DEAD</span>
+        <span class="n">schedule</span><span class="p">()</span> <span class="c1"># switch to any other runnable thread</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="test">
+<h4>Test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h4>
+<p>Please test your implementation with the following code or equivalent logic code in the demo.</p>
+<p>Expected result: multiple threads print the content interleaved.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">foo</span><span class="p">(){</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Thread id: %d %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">current_thread</span><span class="p">().</span><span class="n">id</span><span class="p">(),</span> <span class="n">i</span><span class="p">);</span>
+        <span class="n">delay</span><span class="p">(</span><span class="mi">1000000</span><span class="p">);</span>
+        <span class="n">schedule</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">kernel_main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="c1">// boot setup</span>
+    <span class="c1">// ...</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// N should &gt; 2</span>
+        <span class="n">thread_create</span><span class="p">(</span><span class="n">foo</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">idle</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1</span></code> Implement the thread mechanism.</p>
+</div>
+</div>
+<div class="section" id="requirement-2">
+<h3>Requirement 2<a class="headerlink" href="#requirement-2" title="Permalink to this headline">¶</a></h3>
+<p>In this part, you need to implement the basic user process mechanism such as system calls and user preemption.</p>
+<div class="section" id="arguments-passing">
+<h4>Arguments Passing<a class="headerlink" href="#arguments-passing" title="Permalink to this headline">¶</a></h4>
+<p>In the previous lab, your kernel could already load a user program and get system calls from it.
+In this lab, you need to add the arguments passing into the program loader,
+so you can create a process with different arguments.</p>
+<img alt="../_images/argv.svg" src="../_images/argv.svg" /><p>As shown in the above image, you can put the strings, pointers to the strings, and the number of arguments on the user stack’s top.
+Meanwhile, set the user’s stack pointer to the corresponding address, so a user program can find the passed arguments.</p>
+<p>After that, you can create multiple threads with different arguments to run multiple user processes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">init</span><span class="p">():</span>
+    <span class="n">exec</span><span class="p">(</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;arg1&quot;</span><span class="p">]</span> <span class="p">)</span>
+
+<span class="n">init_thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Be aware of the alignment problem when setting the user stack, unaligned access on rpi3 will cause an exception.</p>
+</div>
+</div>
+<div class="section" id="system-calls">
+<h4>System Calls<a class="headerlink" href="#system-calls" title="Permalink to this headline">¶</a></h4>
+<p>In the previous lab, your user program could already trap to the kernel by the <code class="docutils literal notranslate"><span class="pre">svc</span></code> instruction.
+In this lab, you need to know how the arguments and return value passed across the user mode and the kernel mode.
+Also, you need to implement some basic system calls so you can write simple user programs.</p>
+<div class="section" id="trap-frame">
+<h5>Trap Frame<a class="headerlink" href="#trap-frame" title="Permalink to this headline">¶</a></h5>
+<p>When a user process takes an exception and enters kernel mode,
+the registers are saved at the kernel stack’s top.
+Before returning to the user mode, the registers are loaded.
+The saved content is called the trap frame.</p>
+<p>In regular exception handling(e.g. page fault, interrupt),
+the kernel won’t touch the trap frame, so the user process won’t notice that it entered the kernel mode.
+However, in the case of system calls, the user program expects that the kernel does something for it.</p>
+<p>As regular function calls, the program sets the arguments and gets the return value by accessing the general-purpose registers.
+Then, the kernel can read the trap frame to get the user’s arguments and write the trap frame to set the return value and the error code.</p>
+</div>
+<div class="section" id="required-system-calls">
+<h5>Required System Calls<a class="headerlink" href="#required-system-calls" title="Permalink to this headline">¶</a></h5>
+<p>You need to implement the following system calls for user programs.</p>
+<dl class="simple">
+<dt>int getpid()</dt><dd><p>Get current process’s id.</p>
+</dd>
+<dt>size_t uart_read(char buf[], size_t size)</dt><dd><p>Read <strong>size</strong> byte to user provided buffer <strong>buf</strong> and return the how many byte read.</p>
+</dd>
+<dt>size_t uart_write(const char buf[], size_t size)</dt><dd><p>Write <strong>size</strong> byte from user provided buffer <strong>buf</strong> and return the how many byte written.</p>
+</dd>
+<dt><strong>int exec(const char* name, char *const argv[])</strong></dt><dd><p>Execute the program with arguments.</p>
+</dd>
+<dt><strong>void exit()</strong></dt><dd><p>Terminate the current process.</p>
+</dd>
+</dl>
+<p>In addition, <code class="docutils literal notranslate"><span class="pre">fork()</span></code> is the classic way of UNIX-like operating systems to duplicate the current process.
+You also need to implement it so a process can create another process.
+After invoking <code class="docutils literal notranslate"><span class="pre">fork()</span></code>, two processes are executing the same code.
+To distinguish them, please set the return value of the parent process to the child’s id and set the child process’s return value to 0.</p>
+<p>Note that, we don’t enable the MMU, so the two processes are more like two threads now.
+Please duplicate the content of the parent stack to the child’s and don’t use global variables.</p>
+</div>
+</div>
+<div class="section" id="user-preemption">
+<h4>User Preemption<a class="headerlink" href="#user-preemption" title="Permalink to this headline">¶</a></h4>
+<p>To implement user preemption, at the end of EL0 to EL1 exception handling,
+the kernel should check if the current thread should be switched out(e.g. its time slice is used up).
+If yes, call the <code class="docutils literal notranslate"><span class="pre">schedule()</span></code> to switch to the next thread.</p>
+</div>
+<div class="section" id="id1">
+<h4>Test<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>Please test your implementation with the following code or equivalent logic code in the demo.</p>
+<p>Expected result:</p>
+<ol class="arabic simple">
+<li><p>argv_test prints the arguments,</p></li>
+<li><p>fork_test’s pid should be the same as argv_test,</p></li>
+<li><p>fork_test’s parent should print correct child pid,</p></li>
+<li><p>fork_test’s child should start execution at the correct location.</p></li>
+<li><p>All processes should exit properly.</p></li>
+</ol>
+<p>argv_test.c</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Argv Test, pid %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">());</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">argc</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">puts</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">fork_argv</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;fork_test&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+    <span class="n">exec</span><span class="p">(</span><span class="s">&quot;fork_test&quot;</span><span class="p">,</span> <span class="n">fork_argv</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>fork_test.c</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Fork Test, pid %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">());</span>
+    <span class="kt">int</span> <span class="n">cnt</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">ret</span> <span class="o">=</span> <span class="n">fork</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// child</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;pid: %d, cnt: %d, ptr: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">(),</span> <span class="n">cnt</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cnt</span><span class="p">);</span>
+        <span class="o">++</span><span class="n">cnt</span><span class="p">;</span>
+        <span class="n">fork</span><span class="p">();</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">cnt</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">printf</span><span class="p">(</span><span class="s">&quot;pid: %d, cnt: %d, ptr: %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">(),</span> <span class="n">cnt</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cnt</span><span class="p">);</span>
+            <span class="n">delay</span><span class="p">(</span><span class="mi">1000000</span><span class="p">);</span>
+            <span class="o">++</span><span class="n">cnt</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;parent here, pid %d, child %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">(),</span> <span class="n">ret</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>kernel code</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">user_test</span><span class="p">(){</span>
+    <span class="kt">char</span><span class="o">*</span> <span class="n">argv</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;argv_test&quot;</span><span class="p">,</span> <span class="s">&quot;-o&quot;</span><span class="p">,</span> <span class="s">&quot;arg2&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+    <span class="n">exec</span><span class="p">(</span><span class="s">&quot;argv_test&quot;</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">kernel_main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="c1">// boot setup</span>
+    <span class="c1">// ...</span>
+    <span class="n">thread_create</span><span class="p">(</span><span class="n">user_test</span><span class="p">);</span>
+    <span class="n">idle</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">2</span></code> Implement the the user process related mechanisms.</p>
+</div>
+</div>
+</div>
+<div class="section" id="elective">
+<h2>Elective<a class="headerlink" href="#elective" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="wait-queue">
+<h3>Wait Queue<a class="headerlink" href="#wait-queue" title="Permalink to this headline">¶</a></h3>
+<p>Implement the APIs as below example pseudocode, so each resource can declare its wait queue.
+Also, a thread can suspend itself and wait until the resource is ready.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">wait_queue</span> <span class="o">=</span> <span class="n">WaitQueue</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">block_read</span><span class="p">():</span>
+    <span class="k">while</span> <span class="n">nonblock_read</span><span class="p">()</span> <span class="o">==</span> <span class="n">Again</span><span class="p">:</span>
+        <span class="n">wait_queue</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">handler</span><span class="p">():</span>
+    <span class="c1"># ...</span>
+    <span class="n">wait_queue</span><span class="o">.</span><span class="n">wake_up</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Besides, use the wait queue APIs to implement <code class="docutils literal notranslate"><span class="pre">sleep()</span></code> and blocking API of <code class="docutils literal notranslate"><span class="pre">uart_read()</span></code>.
+The current thread suspends itself and waits for the events to wake it up.</p>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">1</span></code> Implement <code class="docutils literal notranslate"><span class="pre">sleep()</span></code> and <code class="docutils literal notranslate"><span class="pre">uart_read()</span></code> by wait queues.</p>
+</div>
+<div class="section" id="kernel-preemption">
+<h3>Kernel Preemption<a class="headerlink" href="#kernel-preemption" title="Permalink to this headline">¶</a></h3>
+<p>To implement kernel preemption, at the end of EL1 interrupt handling,
+the kernel should check if the current thread should be switched out(e.g. its time slice is used up).
+If yes, call the <code class="docutils literal notranslate"><span class="pre">schedule()</span></code> to switch to the next thread.</p>
+<p>Note that, you are only allowed to disable preemption or interrupts when it’s necessary.
+At other moments, your kernel should always be preemptible.</p>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">2</span></code> Implement kernel preemption.</p>
+</div>
+<div class="section" id="posix-signal">
+<h3>POSIX Signal<a class="headerlink" href="#posix-signal" title="Permalink to this headline">¶</a></h3>
+<p>POSIX signal is an asynchronous inter-process communication mechanism.
+A user process runs a default or registered signal handler when it receives a signal like the interrupt handling.</p>
+<p>You need to implement the <code class="docutils literal notranslate"><span class="pre">kill(pid,</span> <span class="pre">signal)</span></code> system call, so a process sends signals to any process.
+Meanwhile, you need to implement the default signal handler for SIGINT and SIGKILL(terminate the process).
+Next, You need to implement the <code class="docutils literal notranslate"><span class="pre">signal(signal,</span> <span class="pre">handler)</span></code> system call, so a user program can register its function as the signal’s handler.</p>
+<div class="section" id="implementation">
+<h4>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h4>
+<p>One possible implementation is that the kernel checks if there is any pending signal before the process returns to the user mode.
+If yes, the kernel runs the corresponding handler.</p>
+<p>The default signal handlers can be finished in kernel mode.
+On the contrary, the registered signal handlers should be run in the user mode.
+Furthermore, the user process may enter the kernel mode again due to another system call or interrupt while running the handler.
+Therefore, you should save the original context before executing the handler.
+After the handler finishes, the kernel restores the context to continue the original execution.</p>
+<p>After the handler finishes and returns, it’s still in the user mode.
+To make it enters the kernel mode and indicates that it already finishes,
+the kernel can set the handler’s return address(<code class="docutils literal notranslate"><span class="pre">lr</span></code>) to a piece of code containing the <code class="docutils literal notranslate"><span class="pre">sigreturn()</span></code> system call.
+Then after executing it, the kernel knows that the handler is done and restores the previous context.</p>
+<p>Lastly, the handler needs a user stack during its execution.
+The kernel should allocate another stack for the handler and recycle it after the handler finishes.
+The kernel can also put the process’s previous user context and <code class="docutils literal notranslate"><span class="pre">sigreturn()</span></code> on it.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You don’t need to handle the case of nested registered signal handlers.</p>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">3</span></code> Implement POSIX signal.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../hardware/asm.html" class="btn btn-neutral float-right" title="The Assembly You Need" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="lab4.html" class="btn btn-neutral float-left" title="Lab 4: Exception and Interrupt" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Jim.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
