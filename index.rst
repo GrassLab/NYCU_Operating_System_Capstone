@@ -64,6 +64,7 @@ If you find any of them, send an issue or PR to `this github repo <https://githu
   labs/lab2
   labs/lab3
   labs/lab4
+  labs/lab5
 
 .. toctree::
   :caption: Hardware
