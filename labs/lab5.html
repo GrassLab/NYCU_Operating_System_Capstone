@@ -367,6 +367,7 @@ In this lab, your scheduler should at least be able to schedule the threads of t
 <span class="p">.</span><span class="n">global</span> <span class="n">get_current</span>
 <span class="nl">get_current</span><span class="p">:</span>
     <span class="n">mrs</span> <span class="n">x0</span><span class="p">,</span> <span class="n">tpidr_el1</span>
+    <span class="n">ret</span>
 </pre></div>
 </div>
 <p>The above example gets the current thread’s data structure from the system register <code class="docutils literal notranslate"><span class="pre">tpidr_el1</span></code>.
