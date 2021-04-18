@@ -172,6 +172,7 @@ After the next thread is picked, the kernel can save the current thread's regist
     .global get_current
     get_current:
         mrs x0, tpidr_el1
+        ret
 
 The above example gets the current thread's data structure from the system register ``tpidr_el1``.
 Then it passes the current thread and the next thread to the ``switch_to(prev, next)`` function.
