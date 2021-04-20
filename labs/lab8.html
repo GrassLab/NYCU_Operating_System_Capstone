@@ -1,0 +1,921 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Lab 8 : Virtual Memory &mdash; nycuos 0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Assembly You Need" href="../hardware/asm.html" />
+    <link rel="prev" title="Lab 7 : File System Meets Hardware" href="lab7.html" />
+ 
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QNCCQQWJ9J"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-QNCCQQWJ9J');
+</script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> nycuos
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Labs</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="lab0.html">Lab 0: Environment Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab1.html">Lab 1: Hello World</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab2.html">Lab 2: Booting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab3.html">Lab 3: Allocator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab4.html">Lab 4: Exception and Interrupt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab5.html">Lab 5: Thread and User Process</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab6.html">Lab 6 : Virtual File System</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lab7.html">Lab 7 : File System Meets Hardware</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lab 8 : Virtual Memory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#goals-of-this-lab">Goals of this lab</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background">Background</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#terminology">Terminology</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#translation-levels">Translation Levels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#page-v-s-page-frame-v-s-page-table">Page v.s. Page Frame v.s. Page Table</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#page-s-descriptor">Page’s Descriptor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#descriptor-s-format-simplified">Descriptor’s Format(simplified)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#attributes-used-in-this-lab">Attributes Used in this Lab</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#aarch64-memory-layout">AArch64 memory layout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reference">Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#required">Required</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-1">Requirement 1</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#translation-control-register-tcr">Translation Control Register (TCR)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#memory-attribute-indirection-register-mair">Memory Attribute Indirection Register (MAIR)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#identity-paging">Identity Paging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#map-the-kernel-space">Map the Kernel Space</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#finer-granularity-paging">Finer Granularity Paging</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#requirement-2">Requirement 2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pgd-allocation">PGD Allocation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#map-the-user-space">Map the User Space</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#context-switch">Context Switch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#simple-page-fault-handler">Simple Page Fault Handler</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#test">Test</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#elective">Elective</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mmap">Mmap</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#api-specification">API Specification</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#region-page-mapping">Region Page Mapping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests">Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#elf-loader">ELF Loader</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elf-parsing">ELF Parsing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elf-mapping">ELF mapping</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#page-fault-handler-demand-paging">Page Fault Handler &amp; Demand Paging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#copy-on-write">Copy on Write</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#on-fork-a-new-process">On Fork a New Process</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#when-either-children-or-parent-write-to-that-page">When Either Children or Parent Write to that Page</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Hardware</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/asm.html">The Assembly You Need</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/uart.html">UART</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hardware/mailbox.html">Mailbox</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Miscs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../external_reference/index.html">External Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">nycuos</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Lab 8 : Virtual Memory</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/labs/lab8.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="lab-8-virtual-memory">
+<h1>Lab 8 : Virtual Memory<a class="headerlink" href="#lab-8-virtual-memory" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Virtual memory provides isolated address spaces,
+so each user process can run in its address space without interfering with others.</p>
+<p>In this lab, you need to initialize the memory management unit(MMU) and
+set up the address spaces for the kernel and user processes to achieve process isolation</p>
+</div>
+<div class="section" id="goals-of-this-lab">
+<h2>Goals of this lab<a class="headerlink" href="#goals-of-this-lab" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Understand ARMv8-A virtual memory system architecture.</p></li>
+<li><p>Understand how the kernel manages memory for user processes.</p></li>
+<li><p>Understand how demand paging works.</p></li>
+<li><p>Understand how copy-on-write works.</p></li>
+</ul>
+</div>
+<div class="section" id="background">
+<h2>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="terminology">
+<h3>Terminology<a class="headerlink" href="#terminology" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="translation-levels">
+<h4>Translation Levels<a class="headerlink" href="#translation-levels" title="Permalink to this headline">¶</a></h4>
+<p>Translating a virtual address to a physical address involves levels of translation.
+ARMv8-A has 2 to 4 levels of translation for different page sizes and the second stage translation for hypervisors. (not used in labs)</p>
+<p>We name each level as in Linux.
+The top-level is the page global directory (PGD) followed by page upper directory (PUD), page middle directory (PMD), and page table entry(PTE).</p>
+</div>
+<div class="section" id="page-v-s-page-frame-v-s-page-table">
+<h4>Page v.s. Page Frame v.s. Page Table<a class="headerlink" href="#page-v-s-page-frame-v-s-page-table" title="Permalink to this headline">¶</a></h4>
+<p><strong>Page</strong>: A chunk of virtual memory pointed by one entry of PTE.</p>
+<p><strong>Block</strong>: A chunk of virtual memory pointed by one entry of PUD or PMD.</p>
+<p><strong>Page frame</strong>: A chunk of physical memory.</p>
+<p><strong>Page table</strong>: A page frame whose entries point to the next level page tables, blocks, or pages.
+In this documentation, PGD, PUD, PMD, and PTE are all called page tables.</p>
+</div>
+</div>
+<div class="section" id="page-s-descriptor">
+<h3>Page’s Descriptor<a class="headerlink" href="#page-s-descriptor" title="Permalink to this headline">¶</a></h3>
+<p>As mentioned earlier, each entry of a page table points to the next level page table, a block, or a page.
+The entry is combined with the page frame physical address and attributes of the region.</p>
+<p>We list the necessary content for you.</p>
+<div class="section" id="descriptor-s-format-simplified">
+<h4>Descriptor’s Format(simplified)<a class="headerlink" href="#descriptor-s-format-simplified" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Entry of PGD, PUD, PMD which point to a page table
+
++-----+------------------------------+---------+--+
+|     | next level table&#39;s phys addr | ignored |11|
++-----+------------------------------+---------+--+
+     47                             12         2  0
+
+Entry of PUD, PMD which point to a block
+
++-----+------------------------------+---------+--+
+|     |  block&#39;s physical address    |attribute|01|
++-----+------------------------------+---------+--+
+     47                              n         2  0
+
+Entry of PTE which point to a page
+
++-----+------------------------------+---------+--+
+|     |  page&#39;s physical address     |attribute|11|
++-----+------------------------------+---------+--+
+     47                             12         2  0
+
+Invalid entry
+
++-----+------------------------------+---------+--+
+|     |  page&#39;s physical address     |attribute|*0|
++-----+------------------------------+---------+--+
+     47                             12         2  0
+</pre></div>
+</div>
+</div>
+<div class="section" id="attributes-used-in-this-lab">
+<span id="page-attr"></span><h4>Attributes Used in this Lab<a class="headerlink" href="#attributes-used-in-this-lab" title="Permalink to this headline">¶</a></h4>
+<dl class="simple">
+<dt><strong>Bits[54]</strong></dt><dd><p>The unprivileged execute-never bit, non-executable page frame for EL0 if set.</p>
+</dd>
+<dt><strong>Bits[53]</strong></dt><dd><p>The privileged execute-never bit, non-executable page frame for EL1 if set.</p>
+</dd>
+<dt><strong>Bits[47:n]</strong>:</dt><dd><p>The physical address the entry point to.
+Note that the address should be aligned to <span class="math notranslate nohighlight">\(2^n\)</span> Byte.</p>
+</dd>
+<dt><strong>Bits[10]</strong></dt><dd><p>The access flag, a page fault is generated if not set.</p>
+</dd>
+<dt><strong>Bits[7]</strong></dt><dd><p>0 for read-write, 1 for read-only.</p>
+</dd>
+<dt><strong>Bits[6]</strong></dt><dd><p>0 for only kernel access, 1 for user/kernel access.</p>
+</dd>
+<dt><strong>Bits[4:2]</strong></dt><dd><p>The index to MAIR.</p>
+</dd>
+<dt><strong>Bits[1:0]</strong></dt><dd><p>Specify the next level is a block/page, page table, or invalid.</p>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you set Bits[7:6] to 0b01, which means the user can read/write the region,
+then the kernel is automatically not executable in that region no matter what the value of Bits[53] is.</p>
+</div>
+</div>
+</div>
+<div class="section" id="aarch64-memory-layout">
+<h3>AArch64 memory layout<a class="headerlink" href="#aarch64-memory-layout" title="Permalink to this headline">¶</a></h3>
+<p>In the 64-bit virtual memory system, the upper address space is usually for kernel mode, and the lower address space is for user mode.</p>
+<img alt="../_images/mem_layout.png" src="../_images/mem_layout.png" />
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The entire accessible physical address could be linearly mapped by to offset 0xffff_0000_0000_0000 for kernel access in the labs.
+It simplfies the design.</p>
+</div>
+</div>
+<div class="section" id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h3>
+<p>ARMv8-A has the elasticity for different configurations.
+You can change the granularity of paging, the addressable region, etc.
+To keep everything simple, the following configuration is specified for this lab.</p>
+<ul class="simple">
+<li><p>Disable instruction cache.</p></li>
+<li><p>Disable data cache.</p></li>
+<li><p>The addressable region is 48 bit.</p></li>
+<li><p>The page granule size is 4KB.</p></li>
+<li><p>Not use address space ID (ASID).</p></li>
+</ul>
+</div>
+<div class="section" id="reference">
+<h3>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h3>
+<p>So far, we briefly introduce the concept of virtual memory and ARMv8-A virtual memory system architecture.
+For details, you can refer to</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://developer.arm.com/documentation/100940/0101">ARMv8-A Address Translation</a></p></li>
+<li><p><strong>The AArch64 Virtual Memory System Architecture Chapter(page 1720)</strong> of <a class="reference external" href="https://developer.arm.com/documentation/ddi0487/aa/?lang=en">ARMv8-A Architecture Reference</a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="required">
+<h2>Required<a class="headerlink" href="#required" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="requirement-1">
+<h3>Requirement 1<a class="headerlink" href="#requirement-1" title="Permalink to this headline">¶</a></h3>
+<p>We provide a step-by-step tutorial to guide you to make your original kernel works with virtual memory.
+However, we only give the essential explanation in each step.
+For details, please refer to the manual.</p>
+<div class="section" id="translation-control-register-tcr">
+<h4>Translation Control Register (TCR)<a class="headerlink" href="#translation-control-register-tcr" title="Permalink to this headline">¶</a></h4>
+<p>Paging is configured by TCR.
+The following basic configuration is used in this lab.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define TCR_CONFIG_REGION_48bit (((64 - 48) &lt;&lt; 0) | ((64 - 48) &lt;&lt; 16))</span>
+<span class="cp">#define TCR_CONFIG_4KB ((0b00 &lt;&lt; 14) |  (0b10 &lt;&lt; 30))</span>
+<span class="cp">#define TCR_CONFIG_DEFAULT (TCR_CONFIG_REGION_48bit | TCR_CONFIG_4KB)</span>
+
+<span class="n">ldr</span> <span class="n">x0</span><span class="p">,</span> <span class="o">=</span> <span class="n">TCR_CONFIG_DEFAULT</span>
+<span class="n">msr</span> <span class="n">tcr_el1</span><span class="p">,</span> <span class="n">x0</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1-1</span></code> Set up TCR_EL1.</p>
+</div>
+<div class="section" id="memory-attribute-indirection-register-mair">
+<h4>Memory Attribute Indirection Register (MAIR)<a class="headerlink" href="#memory-attribute-indirection-register-mair" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="brief-introduction">
+<h5>Brief Introduction<a class="headerlink" href="#brief-introduction" title="Permalink to this headline">¶</a></h5>
+<p>The MMU has different memory <strong>access policies</strong> for different <strong>memory regions</strong>.</p>
+<ul class="simple">
+<li><p>Memory <strong>access policies</strong> are encoded as attributes and stored in MAIR.</p></li>
+<li><p>To select the attribute for a certain <strong>memory region</strong>, each page table’s entry contains the index to the attribute. (see <a class="reference internal" href="#page-attr"><span class="std std-ref">Attributes Used in this Lab</span></a>)</p></li>
+</ul>
+<p>When the MMU gets a virtual address, it gets the index from the page table’s entry and looks up MAIR to get the memory attribute.
+Then, it accesses the memory with different access policies.</p>
+</div>
+<div class="section" id="used-memory-attributes">
+<h5>Used Memory Attributes<a class="headerlink" href="#used-memory-attributes" title="Permalink to this headline">¶</a></h5>
+<p>The following two attributes are used in the lab.</p>
+<ul class="simple">
+<li><p>Device memory nGnRnE:</p>
+<ul>
+<li><p>Peripheral access.</p></li>
+<li><p>The most restricted memory access.</p></li>
+</ul>
+</li>
+<li><p>Normal memory without cache:</p>
+<ul>
+<li><p>Normal RAM access.</p></li>
+<li><p>Memory gathering, reordering, and speculative execution are possible but without cache.</p></li>
+</ul>
+</li>
+</ul>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define MAIR_DEVICE_nGnRnE 0b00000000</span>
+<span class="cp">#define MAIR_NORMAL_NOCACHE 0b01000100</span>
+<span class="cp">#define MAIR_IDX_DEVICE_nGnRnE 0</span>
+<span class="cp">#define MAIR_IDX_NORMAL_NOCACHE 1</span>
+
+<span class="n">ldr</span> <span class="n">x0</span><span class="p">,</span> <span class="o">=</span><span class="p">(</span> \
+  <span class="p">(</span><span class="n">MAIR_DEVICE_nGnRnE</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">MAIR_IDX_DEVICE_nGnRnE</span> <span class="o">*</span> <span class="mi">8</span><span class="p">))</span> <span class="o">|</span> \
+  <span class="p">(</span><span class="n">MAIR_NORMAL_NOCACHE</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">MAIR_IDX_NORMAL_NOCACHE</span> <span class="o">*</span> <span class="mi">8</span><span class="p">))</span> \
+<span class="p">)</span>
+<span class="n">msr</span> <span class="n">mair_el1</span><span class="p">,</span> <span class="n">x0</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1-2</span></code> Set up <code class="docutils literal notranslate"><span class="pre">mair_el1</span></code>.</p>
+</div>
+</div>
+<div class="section" id="identity-paging">
+<h4>Identity Paging<a class="headerlink" href="#identity-paging" title="Permalink to this headline">¶</a></h4>
+<p>Before enabling the MMU, you need to set up the page tables for the kernel.
+You can start from identity paging with two-level translation.</p>
+<p>In a two-level translation, you only need PGD and PUD.
+Each entry of PUD points to a 1GB block.
+Hence, you only need</p>
+<ul class="simple">
+<li><p>The first entry of PGD which points to PUD</p></li>
+<li><p>The first two entries of PUD.</p>
+<ul>
+<li><p>The first one maps 0x00000000 - 0x3fffffff (RAM and GPU peripherals)</p></li>
+<li><p>The second one maps 0x40000000 - 0x7fffffff(ARM local peripherals).</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>setup</strong></p>
+<ul class="simple">
+<li><p>2 page frames for PGD and PUD.</p></li>
+<li><p>PUD’s entries are blocks.</p></li>
+<li><p>Map all memory as Device nGnRnE.</p></li>
+</ul>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#define PD_TABLE 0b11</span>
+<span class="cp">#define PD_BLOCK 0b01</span>
+<span class="cp">#define PD_ACCESS (1 &lt;&lt; 10)</span>
+<span class="cp">#define BOOT_PGD_ATTR PD_TABLE</span>
+<span class="cp">#define BOOT_PUD_ATTR (PD_ACCESS | (MAIR_IDX_DEVICE_nGnRnE &lt;&lt; 2) | PD_BLOCK)</span>
+
+<span class="n">mov</span> <span class="n">x0</span><span class="p">,</span> <span class="mi">0</span> <span class="c1">// PGD&#39;s page frame at 0x0</span>
+<span class="n">mov</span> <span class="n">x1</span><span class="p">,</span> <span class="mh">0x1000</span> <span class="c1">// PUD&#39;s page frame at 0x1000</span>
+
+<span class="n">ldr</span> <span class="n">x2</span><span class="p">,</span> <span class="o">=</span> <span class="n">BOOT_PGD_ATTR</span>
+<span class="n">orr</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="c1">// combine the physical address of next level page with attribute.</span>
+<span class="n">str</span> <span class="n">x2</span><span class="p">,</span> <span class="p">[</span><span class="n">x0</span><span class="p">]</span>
+
+<span class="n">ldr</span> <span class="n">x2</span><span class="p">,</span> <span class="o">=</span> <span class="n">BOOT_PUD_ATTR</span>
+<span class="n">mov</span> <span class="n">x3</span><span class="p">,</span> <span class="mh">0x00000000</span>
+<span class="n">orr</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span>
+<span class="n">str</span> <span class="n">x3</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">]</span> <span class="c1">// 1st 1GB mapped by the 1st entry of PUD</span>
+<span class="n">mov</span> <span class="n">x3</span><span class="p">,</span> <span class="mh">0x40000000</span>
+<span class="n">orr</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span>
+<span class="n">str</span> <span class="n">x3</span><span class="p">,</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span> <span class="c1">// 2nd 1GB mapped by the 2nd entry of PUD</span>
+
+<span class="n">msr</span> <span class="n">ttbr0_el1</span><span class="p">,</span> <span class="n">x0</span> <span class="c1">// load PGD to the bottom translation based register.</span>
+
+<span class="n">mrs</span> <span class="n">x2</span><span class="p">,</span> <span class="n">sctlr_el1</span>
+<span class="n">orr</span> <span class="n">x2</span> <span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="mi">1</span>
+<span class="n">msr</span> <span class="n">sctlr_el1</span><span class="p">,</span> <span class="n">x2</span> <span class="c1">// enable MMU, cache remains disabled</span>
+</pre></div>
+</div>
+<p>If you set up correctly, your kernel should work as before.</p>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1-3</span></code> Set up identity paging.</p>
+</div>
+<div class="section" id="map-the-kernel-space">
+<h4>Map the Kernel Space<a class="headerlink" href="#map-the-kernel-space" title="Permalink to this headline">¶</a></h4>
+<p>As mentioned earlier, the kernel space is the upper address space.
+Now, you need to modify your linker script to make your kernel’s symbols in the upper address space.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>SECTIONS
+{
+  . = 0xffff000000000000; // kernel space
+  . += 0x80000; // kernel load address
+  _kernel_start = . ;
+  // ...
+}
+</pre></div>
+</div>
+<p>After the kernel is re-built and loaded, load the identity paging’s PGD to <code class="docutils literal notranslate"><span class="pre">ttbr1_el1</span></code>.
+Next, enable the MMU and using an indirect branch to the virtual address.
+Then, the CPU is running your kernel in the upper address space.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="c1">// ...</span>
+
+<span class="n">msr</span> <span class="n">ttbr0_el1</span><span class="p">,</span> <span class="n">x0</span>
+<span class="n">msr</span> <span class="n">ttbr1_el1</span><span class="p">,</span> <span class="n">x0</span> <span class="c1">// also load PGD to the upper translation based register.</span>
+<span class="n">mrs</span> <span class="n">x2</span><span class="p">,</span> <span class="n">sctlr_el1</span>
+<span class="n">orr</span> <span class="n">x2</span> <span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="mi">1</span>
+<span class="n">msr</span> <span class="n">sctlr_el1</span><span class="p">,</span> <span class="n">x2</span>
+
+<span class="n">ldr</span> <span class="n">x2</span><span class="p">,</span> <span class="n">boot_rest</span> <span class="c1">// indirect branch to the virtual address</span>
+<span class="n">br</span> <span class="n">x2</span>
+
+<span class="nl">boot_rest</span><span class="p">:</span>
+<span class="c1">// ...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1-4</span></code> Modify the linker script, and map the kernel space.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If there is hard-coded address(e.g. IO address) in your kernel, you should also set it to the upper address space.</p>
+</div>
+</div>
+<div class="section" id="finer-granularity-paging">
+<h4>Finer Granularity Paging<a class="headerlink" href="#finer-granularity-paging" title="Permalink to this headline">¶</a></h4>
+<p>The granularity of two-level translation is 1GB.
+In the previous setting, all memory regions are mapped as device memory.</p>
+<p>However, unaligned access of device memory causes alignment exception and the compiler sometimes generates unaligned access.
+Hence, you should map most of the RAM as normal memory and MMIO region as device memory.</p>
+<p>Then, you should use three level translation(2MB) or four level translation(4KB) for linear mapping.</p>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">1-5</span></code> Linear map kernel with finer granularity and map RAM as normal memory.</p>
+</div>
+</div>
+<div class="section" id="requirement-2">
+<h3>Requirement 2<a class="headerlink" href="#requirement-2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="pgd-allocation">
+<h4>PGD Allocation<a class="headerlink" href="#pgd-allocation" title="Permalink to this headline">¶</a></h4>
+<p>To isolate user processes, you should create an address space for each of them.
+Hence, the kernel should allocate one PGD for each process when it creates a process.</p>
+</div>
+<div class="section" id="map-the-user-space">
+<h4>Map the User Space<a class="headerlink" href="#map-the-user-space" title="Permalink to this headline">¶</a></h4>
+<p>Same as kernel space mapping, you need to iteratively fill in the entries of page tables from PGD -&gt; PUD -&gt; PMD -&gt; PTE.</p>
+<p>During this process, the next level page tables such as PUD, PMD, and PTE may not already present.
+You should allocate one page frame to be used as the next level page table.
+Then, fill the page frame’s entries to map the virtual address.</p>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">2-1</span></code> Implement user space paging.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You should use 4KB pages for user processes in this lab, so you need PGD, PUD, PMD, and PTE for four-layer translation.</p>
+</div>
+<div class="section" id="revisit-fork-and-exec">
+<h5>Revisit Fork and Exec<a class="headerlink" href="#revisit-fork-and-exec" title="Permalink to this headline">¶</a></h5>
+<p>In lab 5, different user programs used different linker scripts to prevent address overlapping.
+Also, the child process can’t use the same user stack address as the parent.</p>
+<p>With virtual memory, the same virtual address can be mapped to different physical addresses.
+Therefore, you can to revisit <code class="docutils literal notranslate"><span class="pre">fork()</span></code> and <code class="docutils literal notranslate"><span class="pre">exec()</span></code> with virtual memory to solve the problems mentioned above.</p>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">2-2</span></code> Revisit <code class="docutils literal notranslate"><span class="pre">fork()</span></code> and <code class="docutils literal notranslate"><span class="pre">exec()</span></code> to map the same virtual address to different physical addresses for different processes.</p>
+</div>
+</div>
+<div class="section" id="context-switch">
+<h4>Context Switch<a class="headerlink" href="#context-switch" title="Permalink to this headline">¶</a></h4>
+<p>To switch between different address spaces,
+you can set the translation based register(<code class="docutils literal notranslate"><span class="pre">ttbr0_el1</span></code>) with different PGDs.</p>
+<p>In addition, you might need memory barriers to guarantee previous instructions are finished.
+Also, a TLB invalidation is needed because the old values are staled.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">ldr</span> <span class="n">x0</span><span class="p">,</span> <span class="o">=</span> <span class="n">next_pgd</span>
+<span class="n">dsb</span> <span class="n">ish</span> <span class="c1">// ensure write has completed</span>
+<span class="n">msr</span> <span class="n">ttbr0_el1</span><span class="p">,</span> <span class="n">x0</span> <span class="c1">// switch translation based address.</span>
+<span class="n">tlbi</span> <span class="n">vmalle1is</span> <span class="c1">// invalidate all TLB entries</span>
+<span class="n">dsb</span> <span class="n">ish</span> <span class="c1">// ensure completion of TLB invalidatation</span>
+<span class="n">isb</span> <span class="c1">// clear pipeline</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">2-3</span></code> Set <code class="docutils literal notranslate"><span class="pre">ttbr0_el1</span></code> to switch the address space in context switches.</p>
+</div>
+<div class="section" id="simple-page-fault-handler">
+<h4>Simple Page Fault Handler<a class="headerlink" href="#simple-page-fault-handler" title="Permalink to this headline">¶</a></h4>
+<p>When the CPU accesses a non-mapped address, a page fault exception is taken.
+You should <strong>print the fault address</strong> store in <code class="docutils literal notranslate"><span class="pre">far_el1</span></code> in the kernel mode and <strong>terminate the user process</strong>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">required</span> <span class="pre">2-4</span></code> Implement a simple page fault handler.</p>
+</div>
+</div>
+<div class="section" id="test">
+<h3>Test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h3>
+<p>Please test your implementation with the following code or equivalent logic code in the demo.</p>
+<p>test.c</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">if</span><span class="p">(</span><span class="n">fork</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">fork</span><span class="p">();</span>
+    <span class="n">fork</span><span class="p">();</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">cnt</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">&quot;pid: %d, sp: 0x%llx cnt: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">getpid</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">cnt</span><span class="p">,</span> <span class="n">cnt</span><span class="o">++</span><span class="p">);</span> <span class="c1">// address should be the same, but the cnt should be increased indepndently</span>
+      <span class="n">delay</span><span class="p">(</span><span class="mi">1000000</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="kt">int</span><span class="o">*</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0x0</span><span class="p">;</span> <span class="c1">// a non-mapped address.</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">);</span> <span class="c1">// trigger simple page fault.</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Should not be printed</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="elective">
+<h2>Elective<a class="headerlink" href="#elective" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="mmap">
+<h3>Mmap<a class="headerlink" href="#mmap" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">mmap()</span></code> is the system call to create memory regions for a user process.
+Each region can be mapped to a file or anonymous page(the page frames not related to any file) with different protection.
+Then, users can create heap and memory-mapped files using the system call.</p>
+<p>Besides, the kernel can also use it for implementing the program loader.
+Memory regions such as .text and .data can be created by <strong>memory-mapped files</strong>.
+Memory regions such as <strong>.bss</strong> and <strong>user stack</strong> can be created by <strong>anonymous page mapping</strong>.</p>
+<div class="section" id="api-specification">
+<h4>API Specification<a class="headerlink" href="#api-specification" title="Permalink to this headline">¶</a></h4>
+<dl>
+<dt>(void*) mmap(void* addr, size_t len, int prot, int flags, int fd, int file_offset)</dt><dd><p>The kernel uses <strong>addr</strong> and <strong>len</strong> to create a new valid region for the current process.</p>
+<blockquote>
+<div><ul>
+<li><p>If <strong>addr</strong> is NULL, the kernel decides the new region’s start address</p></li>
+<li><p>If <strong>addr</strong> is not NULL</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If the new region <strong>overlaps</strong> with existing regions, or <strong>addr</strong> is <strong>not page-aligned</strong></p>
+<ul>
+<li><p>If MAP_FIXED is set, <code class="docutils literal notranslate"><span class="pre">mmap()</span></code> is failed</p></li>
+<li><p>Otherwise, the kernel takes <strong>addr</strong> as a hint and decides the new region’s start address.</p></li>
+</ul>
+</li>
+<li><p>Otherwise, the kernel uses <strong>addr</strong> as the new region’s start address.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>The memory region created by <code class="docutils literal notranslate"><span class="pre">mmap()</span></code> should be page-aligned, if the <strong>len</strong> is not multiple of the page size, the kernel rounds it up.</p></li>
+</ul>
+</div></blockquote>
+<p><strong>prot</strong> is the region’s access protection</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>PROT_NONE : not accessible</p></li>
+<li><p>PROT_READ : readable</p></li>
+<li><p>PROT_WRITE : writable</p></li>
+<li><p>PROT_EXEC : executable</p></li>
+</ul>
+</div></blockquote>
+<p>The following <strong>flags</strong> should be implemented</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>MAP_FIXED: New region’s start should be <strong>addr</strong>, otherwise the <code class="docutils literal notranslate"><span class="pre">mmap()</span></code> fails.</p></li>
+<li><p>MAP_ANONYMOUS: New region is mapped to anonymous page. It’s usually used for stack and heap.</p></li>
+<li><p>MAP_POPULATE: After <code class="docutils literal notranslate"><span class="pre">mmap()</span></code>, it directly does <a class="reference internal" href="#region-map"><span class="std std-ref">Region Page Mapping</span></a>. (You don’t have to implement it if you implement demand paging)</p></li>
+</ul>
+</div></blockquote>
+<p><strong>fd</strong> is the mapped file’s file descriptor..</p>
+<p>The new region’s is mapped to the <strong>file_offset</strong> of the mapped file.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The file_offset should be page-aligned.</p></li>
+</ul>
+</div></blockquote>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>You don’t need to handle the case that the new region overlaps existing regions.</p></li>
+<li><p>We use memory mapped files for the ELF loader. If you don’t implement ELF loader, you don’t need to implement <strong>fd</strong>, <strong>file_offset</strong>, and <strong>MAP_FIXED</strong>.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="region-page-mapping">
+<span id="region-map"></span><h4>Region Page Mapping<a class="headerlink" href="#region-page-mapping" title="Permalink to this headline">¶</a></h4>
+<p>If the user specifies MAP_POPULATE in the <code class="docutils literal notranslate"><span class="pre">mmap()</span></code> call.
+The kernel should create the page mapping for the newly created region.</p>
+<ul class="simple">
+<li><p>If the region is mapped to anonymous pages</p>
+<ol class="arabic simple">
+<li><p>Allocate page frames.</p></li>
+<li><p>Map the region to page frames, and set the page attributes according to region’s protection policy.</p></li>
+</ol>
+</li>
+<li><p>If the region is mapped to a file</p>
+<ol class="arabic simple">
+<li><p>Allocate page frames.</p></li>
+<li><p>Map the region to page frames, and set the page attributes according to region’s protection policy.</p></li>
+<li><p>Copy the file’s content to the memory region.</p></li>
+</ol>
+</li>
+</ul>
+</div>
+<div class="section" id="tests">
+<h4>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h4>
+<p>Please test your implementation with the following code or equivalent logic code in the demo.</p>
+<p>illegal_read.c</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">,</span> <span class="mi">4096</span><span class="p">,</span> <span class="n">PROT_READ</span><span class="p">,</span> <span class="n">MAP_ANONYMOUS</span><span class="p">,</span> <span class="mi">-1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;addr: %llx</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ptr</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ptr</span><span class="p">[</span><span class="mi">1000</span><span class="p">]);</span> <span class="c1">// should be 0</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ptr</span><span class="p">[</span><span class="mi">4097</span><span class="p">]);</span> <span class="c1">// should be segfault</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>illegal_write.c</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">4096</span><span class="p">,</span> <span class="n">PROT_READ</span><span class="p">,</span> <span class="n">MAP_ANONYMOUS</span><span class="p">,</span> <span class="mi">-1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;addr: %llx</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ptr</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ptr</span><span class="p">[</span><span class="mi">1000</span><span class="p">]);</span> <span class="c1">// should be 0</span>
+  <span class="n">ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// should be seg fault</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span> <span class="c1">// not reached</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">1</span></code> Implement <code class="docutils literal notranslate"><span class="pre">mmap()</span></code>.</p>
+</div>
+</div>
+<div class="section" id="elf-loader">
+<span id="elf"></span><h3>ELF Loader<a class="headerlink" href="#elf-loader" title="Permalink to this headline">¶</a></h3>
+<p>In this part, you need to implement an ELF loader to replace the raw binary loader.</p>
+<div class="section" id="elf-parsing">
+<h4>ELF Parsing<a class="headerlink" href="#elf-parsing" title="Permalink to this headline">¶</a></h4>
+<p>The difference between raw binary and ELF is the header.
+You can get segments information by parsing the ELF file’s header</p>
+<p>To implement an ELF loader, you only need to care about the ELF header and the program headers.
+The following are struct members you need to use for loading a statically linked ELF.</p>
+<div class="section" id="elf-header">
+<h5>ELF Header<a class="headerlink" href="#elf-header" title="Permalink to this headline">¶</a></h5>
+<ul class="simple">
+<li><p><strong>e_entry</strong>: The ELF’s entry point, you need to set user exception return address to it.</p></li>
+<li><p><strong>e_phoff</strong>: The offset of program headers from ELF’s file start.</p></li>
+<li><p><strong>e_phnum</strong>: The number of program headers</p></li>
+</ul>
+</div>
+<div class="section" id="program-header">
+<h5>Program Header<a class="headerlink" href="#program-header" title="Permalink to this headline">¶</a></h5>
+<ul class="simple">
+<li><p><strong>p_type</strong>: The type of program header, you only need to care about PT_LOAD (LOAD segments).</p></li>
+<li><p><strong>p_vaddr</strong>: The virtual address should be loaded to.</p></li>
+<li><p><strong>p_offset</strong>: The offset to start of ELF.</p></li>
+<li><p><strong>p_align</strong>: <strong>p_vaddr</strong> <span class="math notranslate nohighlight">\(\equiv\)</span> <strong>p_offset</strong> (mod <strong>p_align</strong>)</p></li>
+<li><p><strong>p_filesz</strong>: The file size, contains .text, .data, etc.</p></li>
+<li><p><strong>p_memsz</strong>: The memory size of the segment. It usually equals <strong>p_filesz</strong>. If the segment contains .bss, it should be larger than <strong>p_filesz</strong></p></li>
+<li><p><strong>p_flags</strong>: The extra flags, you only need to care about rwx.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Don’t confuse the <strong>p_offset</strong> with <strong>file_offset</strong> in <code class="docutils literal notranslate"><span class="pre">mmap()</span></code>. <strong>p_offset</strong> may not be page-aligned.</p>
+<p>Don’t confuse the <strong>p_vaddr</strong> with <strong>addr</strong> in <code class="docutils literal notranslate"><span class="pre">mmap()</span></code>. <strong>p_vaddr</strong> may not be page-aligned.</p>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">2-1</span></code> Parse the ELF header.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>You can check the correctness by readelf -l &lt;your ELF&gt; on linux</p>
+</div>
+</div>
+<div class="section" id="elf-reference">
+<h5>ELF reference<a class="headerlink" href="#elf-reference" title="Permalink to this headline">¶</a></h5>
+<ul class="simple">
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Executable_and_Linkable_Format">https://en.wikipedia.org/wiki/Executable_and_Linkable_Format</a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="elf-mapping">
+<h4>ELF mapping<a class="headerlink" href="#elf-mapping" title="Permalink to this headline">¶</a></h4>
+<p>You can use <code class="docutils literal notranslate"><span class="pre">mmap()</span></code> to create regions for the ELF file according to the LOAD segments in program headers.</p>
+<p>In general, you can use
+<code class="code docutils literal notranslate"><span class="pre">mmap(p_vaddr,</span> <span class="pre">p_filesz,</span> <span class="pre">p_flags,</span> <span class="pre">MAP_FIXED</span> <span class="pre">|</span> <span class="pre">MAP_POPULATE,</span> <span class="pre">bin_start,</span> <span class="pre">p_offset);</span> <span class="pre">//</span> <span class="pre">MAP_POPULATE</span> <span class="pre">can</span> <span class="pre">be</span> <span class="pre">removed</span> <span class="pre">if</span> <span class="pre">you</span> <span class="pre">implement</span> <span class="pre">demand</span> <span class="pre">paging</span></code>
+to create memory regions, and <a class="reference internal" href="#region-map"><span class="std std-ref">Region Page Mapping</span></a> can do the mapping and copying jobs for you.</p>
+<p>However, there are some cases you need to care about:</p>
+<div class="section" id="p-memsz-p-filesz">
+<h5>p_memsz &gt; p_filesz<a class="headerlink" href="#p-memsz-p-filesz" title="Permalink to this headline">¶</a></h5>
+<p>It usually happens in .bss and .data are in one LOAD segment, or .bss has its own LOAD segment.
+In this case, <strong>.data</strong> should still <strong>map to the ELF file</strong> but <strong>.bss</strong> should <strong>map to anonymous page frames</strong> by setting MAP_ANONYMOUS because it’s not backed by the ELF file.</p>
+<p>If unfortunately, <strong>.bss and .data are in the same segment</strong> and their <strong>boundary is at the middle of a page frame</strong>.
+You should</p>
+<ol class="arabic simple">
+<li><p>Do the same thing as normal file mapping region as in <a class="reference internal" href="#region-map"><span class="std std-ref">Region Page Mapping</span></a></p></li>
+<li><p>Initialize the part of the page frame that belongs to .bss to 0.</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you implement demand paging, you should pre-fault on the .data and .bss boundary and make .bss’s head 0 initialized.</p>
+</div>
+</div>
+<div class="section" id="p-vaddr-and-p-offset-are-not-page-aligned">
+<h5>p_vaddr and p_offset are not page aligned<a class="headerlink" href="#p-vaddr-and-p-offset-are-not-page-aligned" title="Permalink to this headline">¶</a></h5>
+<p>The region created by <code class="docutils literal notranslate"><span class="pre">mmap</span></code> should be page aligned.
+With the MAP_FIXED flag, some parameters need to be modified</p>
+<ul class="simple">
+<li><p><strong>addr</strong> should be set to <strong>p_vaddr</strong> - (<strong>p_vaddr</strong> MOD <strong>page_size</strong>)</p></li>
+<li><p><strong>file_offset</strong> should be set to <strong>p_offset</strong> - (<strong>p_offset</strong> MOD <strong>page_size</strong>)</p></li>
+<li><p><strong>len</strong> should be set to <strong>p_filesz</strong> + (<strong>p_offset</strong> MOD <strong>page_size</strong>)</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">2-2</span></code> Implement ELF mapping.</p>
+</div>
+</div>
+</div>
+<div class="section" id="page-fault-handler-demand-paging">
+<h3>Page Fault Handler &amp; Demand Paging<a class="headerlink" href="#page-fault-handler-demand-paging" title="Permalink to this headline">¶</a></h3>
+<p>The page frames are pre-allocated in the previous parts.
+However, user program might allocate a huge space on heap or memory mapped files without using it.
+The kerenl wastes the CPU time and the physical memory on this things.</p>
+<p>In this part, your kernel should allocate page frames for user processes on demand.
+The kernel only allocates the PGD for newly created process in the beggining.</p>
+<p>When a page fault is generated,</p>
+<ul>
+<li><p>If the fault address is not part of any region in the process’s address space,</p>
+<ul class="simple">
+<li><p>A segmentation fault is generated, and the kernel terminates the process.</p></li>
+</ul>
+</li>
+<li><p>If it’s part of one region,</p>
+<p>Follow <a class="reference internal" href="#region-map"><span class="std std-ref">Region Page Mapping</span></a> but only map <strong>one page frame</strong>. for the fault address.</p>
+</li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">3</span></code> Implement demand paging.</p>
+</div>
+<div class="section" id="copy-on-write">
+<h3>Copy on Write<a class="headerlink" href="#copy-on-write" title="Permalink to this headline">¶</a></h3>
+<p>When a process call <code class="docutils literal notranslate"><span class="pre">fork()</span></code> to create a child process,
+the kernel needs to copy all the page frames owned by the parent in the previous implementation.
+Otherwise, a write by either child or parent might not be awared by the other one and induce error.</p>
+<p>However, an <code class="docutils literal notranslate"><span class="pre">exec()</span></code> followed by a <code class="docutils literal notranslate"><span class="pre">fork()</span></code> call is quite common in UNIX programming.
+The original mapping of child would be destoryed and you waste a lot of time on copying never used page frames.
+Hence, a copy-on-write mechanism comes to help these odds.</p>
+<p>The following statements is a possible copy-on-write implementation.</p>
+<div class="section" id="on-fork-a-new-process">
+<h4>On Fork a New Process<a class="headerlink" href="#on-fork-a-new-process" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li><p>Copy the page frames of page tables.</p></li>
+<li><p>Then mark PTE entries of <strong>both child and parent</strong> to be <strong>read-only</strong> even for original read-write pages.</p></li>
+</ol>
+</div>
+<div class="section" id="when-either-children-or-parent-write-to-that-page">
+<h4>When Either Children or Parent Write to that Page<a class="headerlink" href="#when-either-children-or-parent-write-to-that-page" title="Permalink to this headline">¶</a></h4>
+<p>A permission fault is generated because the PTE entry marks as read-only, then you should</p>
+<p>Check the region’s permission in the address space.</p>
+<ul class="simple">
+<li><p>If the corresponding region is <strong>read-only</strong>, then the <strong>segmentation fault</strong> is generated because the user trying to write a read-only region.</p></li>
+<li><p>If the corresponding region is <strong>read-write</strong>, then it’s a <strong>copy-on-write fault</strong>.</p>
+<ul>
+<li><p>The kernel should allocate a page frame, copy the data, and modify the table’s entry to be correct permission.</p></li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">fork()</span></code> may be executed many times, so page frames may be shared by many children and one parent.
+Hence, you need a reference count for each page frame.
+And you should not reclaim the page frame if there is still someone referring to it.</p>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">elective</span> <span class="pre">4</span></code> Implement copy-on-write.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../hardware/asm.html" class="btn btn-neutral float-right" title="The Assembly You Need" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="lab7.html" class="btn btn-neutral float-left" title="Lab 7 : File System Meets Hardware" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Jim.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
