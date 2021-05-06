@@ -222,7 +222,7 @@ You need to provide the following system calls so a user process can access the 
 .. code:: c
 
   int open(const char *pathname, int flags);
-  int close(int fd);;
+  int close(int fd);
   int write(int fd, const void *buf, int count);
   int read(int fd, void *buf, int count);
 
