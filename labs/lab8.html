@@ -521,7 +521,7 @@ Then, the CPU is running your kernel in the upper address space.</p>
 <span class="n">orr</span> <span class="n">x2</span> <span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="mi">1</span>
 <span class="n">msr</span> <span class="n">sctlr_el1</span><span class="p">,</span> <span class="n">x2</span>
 
-<span class="n">ldr</span> <span class="n">x2</span><span class="p">,</span> <span class="n">boot_rest</span> <span class="c1">// indirect branch to the virtual address</span>
+<span class="n">ldr</span> <span class="n">x2</span><span class="p">,</span> <span class="o">=</span> <span class="n">boot_rest</span> <span class="c1">// indirect branch to the virtual address</span>
 <span class="n">br</span> <span class="n">x2</span>
 
 <span class="nl">boot_rest</span><span class="p">:</span>

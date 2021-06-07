@@ -324,7 +324,7 @@ Then, the CPU is running your kernel in the upper address space.
   orr x2 , x2, 1
   msr sctlr_el1, x2 
 
-  ldr x2, boot_rest // indirect branch to the virtual address
+  ldr x2, = boot_rest // indirect branch to the virtual address
   br x2
 
   boot_rest:
